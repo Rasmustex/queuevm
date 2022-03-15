@@ -4,11 +4,11 @@ Queue-based virtual machine.
 *** Dependencies
 This project uses CMake as its build system and clang/llvm for compilation.
 *** Building the project
-Currently, qvm only has one working component, src_shell{qvmi} - the qvm interpreter, which can execute a qvm file in debug mode (the path is currently hard-coded into src_shell{src/qvmi.c}. You can also turn off debug-mode there). This project is CMake-based, so to build this component, clone and change directory to this project, and do the following:
+Currently, qvm only has one working component, =qvmi= - the qvm interpreter, which can execute a qvm file in debug mode (the path is currently hard-coded into =src/qvmi.c=. You can also turn off debug-mode there). This project is CMake-based, so to build this component, clone and change directory to this project, and do the following:
 
 #+begin_src shell
 cd build
 cmake ..
 cmake --build .
 #+end_src
-This will put src_shell{qvmi} in src_shell{build/src/qvmi}
+This will put =qvmi= in =build/src/qvmi=
