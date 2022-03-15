@@ -30,7 +30,7 @@ const char *inst_as_str(INST inst) {
 }
 
 ERR inst_exec(Qvm *qvm);
-void qvm_run(Qvm *qvm, bool debug);
+void qvm_run(Qvm *qvm, bool debug, int limit);
 void qvm_dump_program_to_file(Qvm *qvm, const char *fname);
 void qvm_load_program_from_file(Qvm *qvm, const char *fname);
 
@@ -66,26 +66,52 @@ ERR inst_exec(Qvm *qvm) {
     return (qvm->ip >= qvm->program_size) * ERR_BAD_INST_PTR;
 }
 
-void qvm_run(Qvm *qvm, bool debug) {
+void qvm_run(Qvm *qvm, bool debug, int limit) {
     ERR err;
-    if(debug) {
-        while(qvm->program[qvm->ip].inst != INST_HALT) {
-            if((err = inst_exec(qvm))!= ERR_OK) {
-                fprintf(stderr, "Runtime error: %s\n", err_as_str(err));
-                free(qvm->queue.data);
-                exit(1);
+    if(limit != -1) {
+        int i = 0;
+        if(debug) {
+            while(qvm->program[qvm->ip].inst != INST_HALT && i < limit) {
+                if((err = inst_exec(qvm))!= ERR_OK) {
+                    fprintf(stderr, "Runtime error: %s\n", err_as_str(err));
+                    free(qvm->queue.data);
+                    exit(1);
+                }
+                print_queue(&qvm->queue);
+                getc(stdin);
+                ++i;
             }
-            print_queue(&qvm->queue);
-            getc(stdin);
+        } else {
+            while(qvm->program[qvm->ip].inst != INST_HALT && i < limit) {
+                if((err = inst_exec(qvm))!= ERR_OK) {
+                    fprintf(stderr, "Runtime error: %s\n", err_as_str(err));
+                    free(qvm->queue.data);
+                    exit(1);
+                }
+                print_queue(&qvm->queue); // will be removed once print instructions introduced
+                ++i;
+            }
         }
     } else {
-        while(qvm->program[qvm->ip].inst != INST_HALT) {
-            if((err = inst_exec(qvm))!= ERR_OK) {
-                fprintf(stderr, "Runtime error: %s\n", err_as_str(err));
-                free(qvm->queue.data);
-                exit(1);
+        if(debug) {
+            while(qvm->program[qvm->ip].inst != INST_HALT) {
+                if((err = inst_exec(qvm))!= ERR_OK) {
+                    fprintf(stderr, "Runtime error: %s\n", err_as_str(err));
+                    free(qvm->queue.data);
+                    exit(1);
+                }
+                print_queue(&qvm->queue);
+                getc(stdin);
             }
-            print_queue(&qvm->queue); // will be removed once print instructions introduced
+        } else {
+            while(qvm->program[qvm->ip].inst != INST_HALT) {
+                if((err = inst_exec(qvm))!= ERR_OK) {
+                    fprintf(stderr, "Runtime error: %s\n", err_as_str(err));
+                    free(qvm->queue.data);
+                    exit(1);
+                }
+                print_queue(&qvm->queue); // will be removed once print instructions introduced
+            }
         }
     }
 }

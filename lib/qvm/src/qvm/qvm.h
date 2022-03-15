@@ -39,7 +39,7 @@ typedef struct {
 } Qvm;
 
 ERR inst_exec(Qvm *qvm);
-void qvm_run(Qvm *qvm, bool debug);
+void qvm_run(Qvm *qvm, bool debug, int limit);
 void qvm_dump_program_to_file(Qvm *qvm, const char *fname);
 void qvm_load_program_from_file(Qvm *qvm, const char *fname);
 
