@@ -1,24 +1,12 @@
-#include "queue.h"
+#include "qvm.h"
 #include <errno.h>
 #include <string.h>
-#include <stddef.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 /*
  * TODO: move into static library; use cmake
  */
-
-#define PROGRAM_CAP 1024
-#define Word uint64_t
-
-typedef enum {
-    ERR_OK,
-    ERR_QUEUE_UNDERFLOW,
-    ERR_ILLEGAL_INST,
-    ERR_BAD_INST_PTR,
-} ERR;
 
 const char *err_as_str(ERR err) {
     switch (err) {
@@ -29,15 +17,6 @@ const char *err_as_str(ERR err) {
     default:                  return "Unreachable error";
     }
 }
-
-typedef enum {
-    INST_NOP,
-    INST_ENQUEUE,
-    INST_DEQUEUE,
-    INST_ADD,
-    INST_HALT,
-    INST_COUNT,
-} INST;
 
 const char *inst_as_str(INST inst) {
     switch (inst) {
@@ -50,40 +29,12 @@ const char *inst_as_str(INST inst) {
     }
 }
 
-typedef struct {
-    INST inst;
-    Word arg;
-} Inst;
-
-// TODO: registers could be fun
-typedef struct {
-    Queue queue;
-    Inst program[PROGRAM_CAP];
-    size_t program_size;
-    uint64_t ip;
-} Qvm;
-
-Qvm qvm = {0};
-
 ERR inst_exec(Qvm *qvm);
 void qvm_run(Qvm *qvm, bool debug);
 void qvm_dump_program_to_file(Qvm *qvm, const char *fname);
 void qvm_load_program_from_file(Qvm *qvm, const char *fname);
 
 // TODO: better error handling
-int main(int argc, const char **argv) {
-    queue_init(&qvm.queue);
-    /* qvm.program[0] = (Inst){.inst = INST_ENQUEUE, .arg = 34}; */
-    /* qvm.program[1] = (Inst){.inst = INST_ENQUEUE, .arg = 3}; */
-    /* qvm.program[2] = (Inst){.inst = INST_ADD}; */
-    /* qvm.program[3] = (Inst){.inst = INST_HALT}; */
-    /* qvm.program_size = 4; */
-    qvm_load_program_from_file(&qvm, "test.qvm");
-    qvm_run(&qvm, true);
-    /* qvm_dump_program_to_file(&qvm, "test.qvm"); */
-    free(qvm.queue.data);
-    return 0;
-}
 
 // TODO: Add enqueue error handling
 ERR inst_exec(Qvm *qvm) {

@@ -1,6 +1,10 @@
 # QVM binaries
 *.qvm
 
+# CMAKE 
+build/*
+.cache
+
 # Prerequisites
 *.d
 
