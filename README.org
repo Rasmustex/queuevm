@@ -1,2 +1,2 @@
-# queuevm
+* queuevm
 Queue-based virtual machine.

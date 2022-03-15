@@ -6,6 +6,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/*
+ * TODO: move into static library; use cmake
+ */
+
 #define PROGRAM_CAP 1024
 #define Word uint64_t
 
@@ -51,6 +55,7 @@ typedef struct {
     Word arg;
 } Inst;
 
+// TODO: registers could be fun
 typedef struct {
     Queue queue;
     Inst program[PROGRAM_CAP];
