@@ -1,7 +1,7 @@
 add_library(
-  queue-lib
+  queue
   src/queue/queue.h
   src/queue/queue.c
   )
 
-target_include_directories(queue-lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
+target_include_directories(queue PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
