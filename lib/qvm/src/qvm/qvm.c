@@ -42,11 +42,11 @@ ERR inst_exec(Qvm *qvm) {
         if(enqueue(&qvm->queue, qvm->program[qvm->ip].arg) != 0)
             return ERR_QUEUE_REALLOC;
         break;
-    case INST_DEQUEUE:
+    case INST_DEQUEUE: // takes register as arg
         if(queue_empty(&qvm->queue))
             return ERR_QUEUE_UNDERFLOW;
         else
-            dequeue(&qvm->queue);
+            *(Word*)qvm->program[qvm->ip].arg = dequeue(&qvm->queue);
         break;
     case INST_ADD: {
         if(qvm->queue.size < 2) {

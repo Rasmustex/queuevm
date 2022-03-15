@@ -37,6 +37,7 @@ typedef struct {
     Inst program[PROGRAM_CAP];
     size_t program_size;
     uint64_t ip;
+    Word a, x; // registers - may want x to be like x register in NES
 } Qvm;
 
 ERR inst_exec(Qvm *qvm);
