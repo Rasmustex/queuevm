@@ -1,3 +1,6 @@
+# QVM binaries
+*.qvm
+
 # Prerequisites
 *.d
 
