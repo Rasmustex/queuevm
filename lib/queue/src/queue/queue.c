@@ -14,7 +14,6 @@ int enqueue(Queue *q, int val) {
     if(q->element_count >= q->size) {
         q->data = (uint64_t*)realloc(q->data, (q->size) * sizeof(uint64_t) * 2);
         if(q == NULL) {
-            fprintf(stderr, "ERROR: Queue reallocation failed");
             return -1;
         }
         for(int i = 0; i < q->front; ++i)

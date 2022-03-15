@@ -4,14 +4,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/*
- * TODO: move into static library; use cmake
- */
-
 const char *err_as_str(ERR err) {
     switch (err) {
     case ERR_OK:              return "ERR_OK";
     case ERR_QUEUE_UNDERFLOW: return "ERR_QUEUE_UNDERFLOW";
+    case ERR_QUEUE_REALLOC:   return "ERR_QUEUE_REALLOC";
     case ERR_ILLEGAL_INST:    return "ERR_ILLEGAL_INST";
     case ERR_BAD_INST_PTR:    return "ERR_BAD_INST_PTR";
     default:                  return "Unreachable error";
@@ -42,7 +39,8 @@ ERR inst_exec(Qvm *qvm) {
     case INST_NOP:
         break;
     case INST_ENQUEUE:
-        enqueue(&qvm->queue, qvm->program[qvm->ip].arg);
+        if(enqueue(&qvm->queue, qvm->program[qvm->ip].arg) != 0)
+            return ERR_QUEUE_REALLOC;
         break;
     case INST_DEQUEUE:
         if(queue_empty(&qvm->queue))

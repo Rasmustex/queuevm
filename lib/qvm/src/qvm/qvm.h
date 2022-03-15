@@ -12,6 +12,7 @@
 typedef enum {
     ERR_OK,
     ERR_QUEUE_UNDERFLOW,
+    ERR_QUEUE_REALLOC,
     ERR_ILLEGAL_INST,
     ERR_BAD_INST_PTR,
 } ERR;
