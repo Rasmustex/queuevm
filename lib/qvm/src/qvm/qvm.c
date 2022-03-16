@@ -46,7 +46,7 @@ ERR inst_exec(Qvm *qvm) {
         if(queue_empty(&qvm->queue))
             return ERR_QUEUE_UNDERFLOW;
         else
-            *(Word*)qvm->program[qvm->ip].arg = dequeue(&qvm->queue);
+            dequeue(&qvm->queue);
         break;
     case INST_ADD: {
         if(qvm->queue.size < 2) {
