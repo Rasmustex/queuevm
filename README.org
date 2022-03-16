@@ -7,6 +7,7 @@ This project uses CMake as its build system and clang/llvm for compilation.
 Currently, qvm only has one working component, =qvmi= - the qvm interpreter, which can execute a qvm file in debug mode (the path is currently hard-coded into =src/qvmi.c=. You can also turn off debug-mode there). This project is CMake-based, so to build this component, clone and change directory to this project, and do the following:
 
 #+begin_src shell
+mkdir build
 cd build
 cmake ..
 cmake --build .
