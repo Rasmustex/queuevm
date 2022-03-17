@@ -1,0 +1,11 @@
+enq 10
+enq 1
+skip
+sub
+dup
+enq 0
+skip
+eq
+skip
+jz 1
+halt
