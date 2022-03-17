@@ -40,9 +40,15 @@ typedef struct {
     Word a, x; // registers - may want x to be like x register in NES
 } Qvm;
 
-ERR inst_exec(Qvm *qvm);
+ERR qvm_inst_exec(Qvm *qvm);
 void qvm_run(Qvm *qvm, bool debug, int limit);
-void qvm_dump_program_to_file(Qvm *qvm, const char *fname);
 void qvm_load_program_from_file(Qvm *qvm, const char *fname);
+// TODO: separate library
+typedef struct {
+    Inst program[PROGRAM_CAP];
+    size_t program_size;
+} Quasm;
+
+void quasm_dump_program_to_file(Quasm *quasm, const char *fname);
 
 #endif

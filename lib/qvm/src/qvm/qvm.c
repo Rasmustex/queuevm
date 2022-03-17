@@ -26,23 +26,20 @@ const char *inst_as_str(INST inst) {
     }
 }
 
-ERR inst_exec(Qvm *qvm);
-void qvm_run(Qvm *qvm, bool debug, int limit);
-void qvm_dump_program_to_file(Qvm *qvm, const char *fname);
-void qvm_load_program_from_file(Qvm *qvm, const char *fname);
-
 // TODO: better error handling
 
 // TODO: Add enqueue error handling
-ERR inst_exec(Qvm *qvm) {
+ERR qvm_inst_exec(Qvm *qvm) {
     switch (qvm->program[qvm->ip].inst) {
     case INST_NOP:
         break;
     case INST_ENQUEUE:
+        // TODO: change to allow enqueue from register
         if(enqueue(&qvm->queue, qvm->program[qvm->ip].arg) != 0)
             return ERR_QUEUE_REALLOC;
         break;
-    case INST_DEQUEUE: // takes register as arg
+    case INST_DEQUEUE:
+        // TODO: change to dequeue into register, and add drop inst
         if(queue_empty(&qvm->queue))
             return ERR_QUEUE_UNDERFLOW;
         else
@@ -70,7 +67,7 @@ void qvm_run(Qvm *qvm, bool debug, int limit) {
         int i = 0;
         if(debug) {
             while(qvm->program[qvm->ip].inst != INST_HALT && i < limit) {
-                if((err = inst_exec(qvm))!= ERR_OK) {
+                if((err = qvm_inst_exec(qvm))!= ERR_OK) {
                     fprintf(stderr, "Runtime error: %s\n", err_as_str(err));
                     free(qvm->queue.data);
                     exit(1);
@@ -81,7 +78,7 @@ void qvm_run(Qvm *qvm, bool debug, int limit) {
             }
         } else {
             while(qvm->program[qvm->ip].inst != INST_HALT && i < limit) {
-                if((err = inst_exec(qvm))!= ERR_OK) {
+                if((err = qvm_inst_exec(qvm))!= ERR_OK) {
                     fprintf(stderr, "Runtime error: %s\n", err_as_str(err));
                     free(qvm->queue.data);
                     exit(1);
@@ -93,17 +90,18 @@ void qvm_run(Qvm *qvm, bool debug, int limit) {
     } else {
         if(debug) {
             while(qvm->program[qvm->ip].inst != INST_HALT) {
-                if((err = inst_exec(qvm))!= ERR_OK) {
+                if((err = qvm_inst_exec(qvm))!= ERR_OK) {
                     fprintf(stderr, "Runtime error: %s\n", err_as_str(err));
                     free(qvm->queue.data);
                     exit(1);
                 }
                 print_queue(&qvm->queue);
+                printf("Inst: %s\n", inst_as_str(qvm->program[qvm->ip].inst));
                 getc(stdin);
             }
         } else {
             while(qvm->program[qvm->ip].inst != INST_HALT) {
-                if((err = inst_exec(qvm))!= ERR_OK) {
+                if((err = qvm_inst_exec(qvm))!= ERR_OK) {
                     fprintf(stderr, "Runtime error: %s\n", err_as_str(err));
                     free(qvm->queue.data);
                     exit(1);
@@ -114,17 +112,15 @@ void qvm_run(Qvm *qvm, bool debug, int limit) {
     }
 }
 
-void qvm_dump_program_to_file(Qvm *qvm, const char *fname) {
+void quasm_dump_program_to_file(Quasm *quasm, const char *fname) {
     FILE *f = fopen(fname, "wb");
     if(f == NULL) {
         fprintf(stderr, "Error: Failed to open file '%s'\n", fname);
-        free(qvm->queue.data);
         exit(1);
     }
-    fwrite(qvm->program, sizeof(Inst), qvm->program_size, f);
+    fwrite(quasm->program, sizeof(Inst), quasm->program_size, f);
     if(ferror(f)) {
         fprintf(stderr, "Error: Failed to write to file '%s': %s\n", fname, strerror(errno));
-        free(qvm->queue.data);
         exit(1);
     }
     fclose(f);
