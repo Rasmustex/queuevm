@@ -23,6 +23,7 @@ cmake --build .
 #+end_src
 This will put =qvmi= in =build/src/qvmi= and =quasm= in =build/src/quasm= relative to the project root.
 
+*** Assembling and running quasm programs
 There are test files in the =test= folder. These test files are written in the assembly language for the virtual machine. To try one of them out, do (from the project root):
 #+begin_src shell
 ./build/src/quasm test/test1.quasm
