@@ -11,7 +11,7 @@ void queue_init(Queue *q) {
     q->front = 0;
 }
 
-int enqueue(Queue *q, int val) {
+int enqueue(Queue *q, uint64_t val) {
     if(q->element_count >= q->size) {
         q->data = (uint64_t*)realloc(q->data, (q->size) * sizeof(uint64_t) * 2);
         if(q == NULL) {
@@ -39,6 +39,14 @@ bool queue_empty(Queue *q) {
 
 int queue_front(Queue *q) {
     return q->data[q->front];
+}
+
+void queue_skip(Queue *q) {
+    uint64_t front = q->data[q->front];
+    uint64_t backindex = (q->front + q->element_count) % q->size - 1; // only calculate once
+    q->data[q->front] = q->data[backindex];
+    q->data[backindex] = front;
+    return;
 }
 
 void print_queue(Queue *q) {

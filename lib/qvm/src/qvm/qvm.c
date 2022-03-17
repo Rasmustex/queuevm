@@ -1,4 +1,5 @@
 #include "qvm.h"
+#include "queue/queue.h"
 #include <errno.h>
 #include <stdint.h>
 #include <string.h>
@@ -22,6 +23,13 @@ const char *inst_as_str(INST inst) {
     case INST_ENQUEUE:        return "INST_ENQUEUE";
     case INST_DEQUEUE:        return "INST_DEQUEUE";
     case INST_ADD:            return "INST_ADD";
+    case INST_SUB:            return "INST_SUB";
+    case INST_DUP:            return "INST_DUP";
+    case INST_SKIP:           return "INST_SKIP";
+    case INST_EQ:             return "INST_EQ";
+    case INST_JUMP:           return "INST_JUMP";
+    case INST_JZ:             return "INST_JZ";
+    case INST_JNZ:            return "INST_JNZ";
     case INST_HALT:           return "INST_HALT";
     case INST_COUNT: default: return "Unreachable instruction";
     }
@@ -51,9 +59,60 @@ ERR qvm_inst_exec(Qvm *qvm) {
             return ERR_QUEUE_UNDERFLOW;
         }
         Word a = dequeue(&qvm->queue);
-        enqueue(&qvm->queue, a + dequeue(&qvm->queue));
+        if(enqueue(&qvm->queue, a + dequeue(&qvm->queue)) != 0)
+            return ERR_QUEUE_REALLOC;
         break;
-    } case INST_COUNT: case INST_HALT: default:
+    } case INST_SUB: {
+        if(qvm->queue.size < 2) {
+            return ERR_QUEUE_UNDERFLOW;
+        }
+        Word a = dequeue(&qvm->queue);
+        if(enqueue(&qvm->queue, dequeue(&qvm->queue) - a) != 0)
+            return ERR_QUEUE_REALLOC;
+        break;
+    } case INST_DUP:
+        if(enqueue(&qvm->queue, queue_front(&qvm->queue)) != 0)
+            return ERR_QUEUE_REALLOC;
+        break;
+    case INST_SKIP:
+        if(qvm->queue.size < 2)
+            return ERR_QUEUE_UNDERFLOW;
+
+        queue_skip(&qvm->queue);
+        break;
+    case INST_EQ: {
+        if(qvm->queue.size < 2) {
+            return ERR_QUEUE_UNDERFLOW;
+        }
+        Word a = dequeue(&qvm->queue);
+        if(enqueue(&qvm->queue, a == dequeue(&qvm->queue)) != 0)
+            return ERR_QUEUE_REALLOC;
+        break;
+    } case INST_JUMP:
+        if(qvm->program[qvm->ip].arg > qvm->program_size) // ip is word which is uint (for now) and will always be read here as such - so no risk of negative ip
+            return ERR_BAD_INST_PTR;
+        else
+            qvm->ip = qvm->program[qvm->ip].arg - 1; // minus one to account for increment at end of function
+        break;
+    case INST_JZ:
+        if(qvm->queue.size < 1)
+            return ERR_QUEUE_UNDERFLOW;
+
+        if(qvm->program[qvm->ip].arg > qvm->program_size) // ip is word which is uint (for now) and will always be read here as such - so no risk of negative ip
+            return ERR_BAD_INST_PTR;
+        else if(dequeue(&qvm->queue) == 0)
+            qvm->ip = qvm->program[qvm->ip].arg; // minus one to account for increment at end of function
+        break;
+    case INST_JNZ:
+        if(qvm->queue.size < 1)
+            return ERR_QUEUE_UNDERFLOW;
+
+        if(qvm->program[qvm->ip].arg > qvm->program_size) // ip is word which is uint (for now) and will always be read here as such - so no risk of negative ip
+            return ERR_BAD_INST_PTR;
+        else if(dequeue(&qvm->queue) != 0)
+            qvm->ip = qvm->program[qvm->ip].arg - 1; // minus one to account for increment at end of function
+        break;
+    case INST_COUNT: case INST_HALT: default:
         return ERR_ILLEGAL_INST;
         break;
     }
@@ -67,6 +126,7 @@ void qvm_run(Qvm *qvm, bool debug, int64_t limit) {
         int i = 0;
         if(debug) {
             while(qvm->program[qvm->ip].inst != INST_HALT && i < limit) {
+                printf("IP: %ld\n", qvm->ip);
                 printf("Inst: %s\n", inst_as_str(qvm->program[qvm->ip].inst));
                 if((err = qvm_inst_exec(qvm))!= ERR_OK) {
                     fprintf(stderr, "Runtime error: %s\n", err_as_str(err));
@@ -79,6 +139,7 @@ void qvm_run(Qvm *qvm, bool debug, int64_t limit) {
             }
         } else {
             while(qvm->program[qvm->ip].inst != INST_HALT && i < limit) {
+                printf("IP: %ld\n", qvm->ip);
                 printf("Inst: %s\n", inst_as_str(qvm->program[qvm->ip].inst));
                 if((err = qvm_inst_exec(qvm))!= ERR_OK) {
                     fprintf(stderr, "Runtime error: %s\n", err_as_str(err));
@@ -92,6 +153,7 @@ void qvm_run(Qvm *qvm, bool debug, int64_t limit) {
     } else {
         if(debug) {
             while(qvm->program[qvm->ip].inst != INST_HALT) {
+                printf("IP: %ld\n", qvm->ip);
                 printf("Inst: %s\n", inst_as_str(qvm->program[qvm->ip].inst));
                 if((err = qvm_inst_exec(qvm))!= ERR_OK) {
                     fprintf(stderr, "Runtime error: %s\n", err_as_str(err));
@@ -103,6 +165,7 @@ void qvm_run(Qvm *qvm, bool debug, int64_t limit) {
             }
         } else {
             while(qvm->program[qvm->ip].inst != INST_HALT) {
+                printf("IP: %ld\n", qvm->ip);
                 printf("Inst: %s\n", inst_as_str(qvm->program[qvm->ip].inst));
                 if((err = qvm_inst_exec(qvm))!= ERR_OK) {
                     fprintf(stderr, "Runtime error: %s\n", err_as_str(err));

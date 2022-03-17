@@ -17,9 +17,10 @@ typedef struct {
 } Queue;
 
 void queue_init(Queue *q);
-int enqueue(Queue *q, int val);
+int enqueue(Queue *q, uint64_t val);
 uint64_t dequeue(Queue *q);
 bool queue_empty(Queue *q);
 int queue_front(Queue *q);
+void queue_skip(Queue *q);
 void print_queue(Queue *q);
 #endif

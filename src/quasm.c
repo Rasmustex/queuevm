@@ -111,6 +111,27 @@ int main(int argc, const char **argv) {
                 } else if(!strcmp(token, "add")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_ADD};
                     inst_needs_arg = false;
+                } else if(!strcmp(token, "sub")) {
+                    quasm.program[quasm.program_size++] = (Inst) {.inst = INST_SUB};
+                    inst_needs_arg = false;
+                } else if(!strcmp(token, "dup")) {
+                    quasm.program[quasm.program_size++] = (Inst) {.inst = INST_DUP};
+                    inst_needs_arg = false;
+                } else if(!strcmp(token, "skip")) {
+                    quasm.program[quasm.program_size++] = (Inst) {.inst = INST_SKIP};
+                    inst_needs_arg = false;
+                } else if(!strcmp(token, "eq")) {
+                    quasm.program[quasm.program_size++] = (Inst) {.inst = INST_EQ};
+                    inst_needs_arg = false;
+                } else if(!strcmp(token, "jmp")) {
+                    quasm.program[quasm.program_size] = (Inst) {.inst = INST_JUMP};
+                    inst_needs_arg = true;
+                } else if(!strcmp(token, "jz")) {
+                    quasm.program[quasm.program_size] = (Inst) {.inst = INST_JZ};
+                    inst_needs_arg = true;
+                } else if(!strcmp(token, "jnz")) {
+                    quasm.program[quasm.program_size] = (Inst) {.inst = INST_JNZ};
+                    inst_needs_arg = true;
                 } else if(!strcmp(token, "halt")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_HALT};
                     inst_needs_arg = false;
