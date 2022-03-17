@@ -13,7 +13,7 @@ SET(CMAKE_OBJDUMP "/usr/bin/llvm-objdump")
 SET(CMAKE_RANLIB  "/usr/bin/llvm-ranlib")
 #+end_src
 *** Building the project
-Currently, qvm has two working components, =qvmi= - the qvm interpreter, which can execute a qvm binary file, and =quasm=, the queue assembler, which translates assembly for the virtual machine into bytecode. This project is CMake-based, so to build this component, clone and change directory to this project, and do the following:
+Currently, qvm has two working components, =qvmi= - the qvm interpreter, which can execute a qvm binary file, and =quasm=, the queue assembler, which translates assembly for the virtual machine into bytecode. This project is CMake-based, so to build these components, clone and change directory to this project, and do the following:
 
 #+begin_src shell
 mkdir build
@@ -21,11 +21,11 @@ cd build
 cmake ..
 cmake --build .
 #+end_src
-This will put =qvmi= in =/build/src/qvmi= and =quasm= in =/build/src/quasm=.
+This will put =qvmi= in =build/src/qvmi= and =quasm= in =build/src/quasm= relative to the project root.
 
-There are test files in the =/test= folder. These test files are written in the assembly language for the virtual machine. To try one of them out, do (from the project root):
+There are test files in the =test= folder. These test files are written in the assembly language for the virtual machine. To try one of them out, do (from the project root):
 #+begin_src shell
-build/src/quasm test/test1.quasm
-build/src/qvm out.qvm
+./build/src/quasm test/test1.quasm
+./build/src/qvm out.qvm
 #+end_src
 Both =quasm= and =qvm= print their own usage when you use the =-h= flag.
