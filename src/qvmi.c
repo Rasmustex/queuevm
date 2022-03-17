@@ -1,4 +1,5 @@
 #include <qvm/qvm.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -22,9 +23,9 @@ int main(int argc, const char **argv) {
         return 1;
     }
     const char *arg, *fname;
-    int strindex;
+    uint64_t strindex;
     int dflag, iflag;
-    int execution_limit = -1;
+    int64_t execution_limit = -1;
     dflag = iflag = 0;
     fname = NULL;
     for(int i = 1; i < argc; ++i) {
@@ -75,7 +76,7 @@ int main(int argc, const char **argv) {
                 }
                 strindex++;
             }
-            execution_limit = atoi(arg);
+            execution_limit = atol(arg);
         } else {
             if(fname == NULL) {
                 fname = arg;

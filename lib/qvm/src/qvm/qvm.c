@@ -1,5 +1,6 @@
 #include "qvm.h"
 #include <errno.h>
+#include <stdint.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,8 +53,7 @@ ERR qvm_inst_exec(Qvm *qvm) {
         Word a = dequeue(&qvm->queue);
         enqueue(&qvm->queue, a + dequeue(&qvm->queue));
         break;
-    } case INST_COUNT:
-    default:
+    } case INST_COUNT: case INST_HALT: default:
         return ERR_ILLEGAL_INST;
         break;
     }
@@ -61,12 +61,13 @@ ERR qvm_inst_exec(Qvm *qvm) {
     return (qvm->ip >= qvm->program_size) * ERR_BAD_INST_PTR;
 }
 
-void qvm_run(Qvm *qvm, bool debug, int limit) {
+void qvm_run(Qvm *qvm, bool debug, int64_t limit) {
     ERR err;
     if(limit != -1) {
         int i = 0;
         if(debug) {
             while(qvm->program[qvm->ip].inst != INST_HALT && i < limit) {
+                printf("Inst: %s\n", inst_as_str(qvm->program[qvm->ip].inst));
                 if((err = qvm_inst_exec(qvm))!= ERR_OK) {
                     fprintf(stderr, "Runtime error: %s\n", err_as_str(err));
                     free(qvm->queue.data);
@@ -78,6 +79,7 @@ void qvm_run(Qvm *qvm, bool debug, int limit) {
             }
         } else {
             while(qvm->program[qvm->ip].inst != INST_HALT && i < limit) {
+                printf("Inst: %s\n", inst_as_str(qvm->program[qvm->ip].inst));
                 if((err = qvm_inst_exec(qvm))!= ERR_OK) {
                     fprintf(stderr, "Runtime error: %s\n", err_as_str(err));
                     free(qvm->queue.data);
@@ -90,17 +92,18 @@ void qvm_run(Qvm *qvm, bool debug, int limit) {
     } else {
         if(debug) {
             while(qvm->program[qvm->ip].inst != INST_HALT) {
+                printf("Inst: %s\n", inst_as_str(qvm->program[qvm->ip].inst));
                 if((err = qvm_inst_exec(qvm))!= ERR_OK) {
                     fprintf(stderr, "Runtime error: %s\n", err_as_str(err));
                     free(qvm->queue.data);
                     exit(1);
                 }
                 print_queue(&qvm->queue);
-                printf("Inst: %s\n", inst_as_str(qvm->program[qvm->ip].inst));
                 getc(stdin);
             }
         } else {
             while(qvm->program[qvm->ip].inst != INST_HALT) {
+                printf("Inst: %s\n", inst_as_str(qvm->program[qvm->ip].inst));
                 if((err = qvm_inst_exec(qvm))!= ERR_OK) {
                     fprintf(stderr, "Runtime error: %s\n", err_as_str(err));
                     free(qvm->queue.data);

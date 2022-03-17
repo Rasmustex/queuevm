@@ -2,9 +2,18 @@
 Queue-based virtual machine.
 ** Get started
 *** Dependencies
-This project uses CMake as its build system and clang/llvm for compilation.
+This project uses CMake as its build system and clang/llvm for compilation. If you prefer another compiler, you can change it in [[https://github.com/Rasmustex/queuevm/blob/main/CMakeLists.txt#L3-L12][/CMakeLists.txt]]. If you want it to use your default compiler, just delete the following lines:
+#+begin_src cmake
+SET(CMAKE_C_COMPILER       "/usr/bin/clang")
+
+SET(CMAKE_AR      "/usr/bin/llvm-ar")
+SET(CMAKE_LINKER  "/usr/bin/llvm-ld")
+SET(CMAKE_NM      "/usr/bin/llvm-nm")
+SET(CMAKE_OBJDUMP "/usr/bin/llvm-objdump")
+SET(CMAKE_RANLIB  "/usr/bin/llvm-ranlib")
+#+end_src
 *** Building the project
-Currently, qvm only has one working component, =qvmi= - the qvm interpreter, which can execute a qvm file in debug mode (the path is currently hard-coded into =src/qvmi.c=. You can also turn off debug-mode there). This project is CMake-based, so to build this component, clone and change directory to this project, and do the following:
+Currently, qvm has two working components, =qvmi= - the qvm interpreter, which can execute a qvm binary file, and =quasm=, the queue assembler, which translates assembly for the virtual machine into bytecode. This project is CMake-based, so to build this component, clone and change directory to this project, and do the following:
 
 #+begin_src shell
 mkdir build
@@ -12,4 +21,11 @@ cd build
 cmake ..
 cmake --build .
 #+end_src
-This will put =qvmi= in =build/src/qvmi=
+This will put =qvmi= in =/build/src/qvmi= and =quasm= in =/build/src/quasm=.
+
+There are test files in the =/test= folder. These test files are written in the assembly language for the virtual machine. To try one of them out, do (from the project root):
+#+begin_src shell
+build/src/quasm test/test1.quasm
+build/src/qvm out.qvm
+#+end_src
+Both =quasm= and =qvm= print their own usage when you use the =-h= flag.

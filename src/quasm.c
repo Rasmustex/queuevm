@@ -93,7 +93,7 @@ int main(int argc, const char **argv) {
     }
 
     bool inst_needs_arg = false;
-    while(lex(f) != EOF) {
+    while((int)lex(f) != EOF) {
         switch (tt) {
         case NAME:
             if(!inst_needs_arg) {

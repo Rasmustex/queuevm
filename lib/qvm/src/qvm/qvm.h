@@ -41,7 +41,7 @@ typedef struct {
 } Qvm;
 
 ERR qvm_inst_exec(Qvm *qvm);
-void qvm_run(Qvm *qvm, bool debug, int limit);
+void qvm_run(Qvm *qvm, bool debug, int64_t limit);
 void qvm_load_program_from_file(Qvm *qvm, const char *fname);
 // TODO: separate library
 typedef struct {

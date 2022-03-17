@@ -1,4 +1,5 @@
 #include "queue.h"
+#include <stdint.h>
 void queue_init(Queue *q) {
     if(q == NULL) {
         fprintf(stderr, "Error: Queue pointer is null");
@@ -16,7 +17,7 @@ int enqueue(Queue *q, int val) {
         if(q == NULL) {
             return -1;
         }
-        for(int i = 0; i < q->front; ++i)
+        for(uint64_t i = 0; i < q->front; ++i)
             q->data[i + q->size] = q->data[i];
         q->size *= 2;
     }

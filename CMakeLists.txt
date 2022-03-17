@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
 SET(CMAKE_C_COMPILER       "/usr/bin/clang")
-SET(CMAKE_C_FLAGS          "-Wall")
+SET(CMAKE_C_FLAGS          "-std=c11 -Wall -Wextra -pedantic -Wswitch-enum")
 SET(CMAKE_C_FLAGS_DEBUG    "-g")
 SET(CMAKE_C_FLAGS_RELEASE  "-O2 -DNDEBUG")
 
