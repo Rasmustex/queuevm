@@ -29,5 +29,6 @@ Word dequeue(Queue *q);
 bool queue_empty(Queue *q);
 Word queue_front(Queue *q);
 void queue_skip(Queue *q);
+void queue_cheat(Queue *q);
 void print_queue(Queue *q);
 #endif

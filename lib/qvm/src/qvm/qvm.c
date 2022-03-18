@@ -27,6 +27,7 @@ const char *inst_as_str(INST inst) {
     case INST_SUBI:           return "INST_SUBI";
     case INST_DUP:            return "INST_DUP";
     case INST_SKIP:           return "INST_SKIP";
+    case INST_CHEAT:          return "INST_CHEAT";
     case INST_EQ:             return "INST_EQ";
     case INST_JUMP:           return "INST_JUMP";
     case INST_JZ:             return "INST_JZ";
@@ -82,6 +83,12 @@ ERR qvm_inst_exec(Qvm *qvm) {
             return ERR_QUEUE_UNDERFLOW;
 
         queue_skip(&qvm->queue);
+        break;
+    case INST_CHEAT:
+        if(qvm->queue.element_count < 2)
+            return ERR_QUEUE_UNDERFLOW;
+
+        queue_cheat(&qvm->queue);
         break;
     case INST_EQ: {
         if(qvm->queue.element_count < 2) {

@@ -1,4 +1,5 @@
 #include "queue.h"
+#include <stddef.h>
 #include <stdint.h>
 void queue_init(Queue *q) {
     if(q == NULL) {
@@ -41,17 +42,25 @@ Word queue_front(Queue *q) {
     return q->data[q->front];
 }
 
-void queue_skip(Queue *q) {
+inline void queue_skip(Queue *q) {
+    Word back = q->data[(q->front + q->element_count - 1) % q->size];
+    q->front = (q->front - 1) % q->size;
+    q->data[q->front] = back;
+    return;
+}
+
+inline void queue_cheat(Queue *q) {
     Word front = q->data[q->front];
-    uint64_t backindex = (q->front + q->element_count) % q->size - 1; // only calculate once
-    q->data[q->front] = q->data[backindex];
-    q->data[backindex] = front;
+    uint64_t nextindex = (q->front + 1) % q->size;
+    q->data[q->front] = q->data[nextindex];
+    q->data[nextindex] = front;
     return;
 }
 
 void print_queue(Queue *q) {
     printf("Queue:\n");
     for(size_t i = 0; i < q->element_count; ++i) {
-        printf("\t%lu: u64: %lu i64: %ld f64: %f ptr: %p\n", i, q->data[q->front + i].u64, q->data[q->front + i].i64, q->data[q->front + i].f64, q->data[q->front + i].ptr64);
+        size_t queue_idx = (q->front + i) % q->size;
+        printf("\t%lu: u64: %lu i64: %ld f64: %f ptr: %p\n", i, q->data[queue_idx].u64, q->data[queue_idx].i64, q->data[queue_idx].f64, q->data[queue_idx].ptr64);
     }
 }

@@ -120,6 +120,9 @@ int main(int argc, const char **argv) {
                 } else if(!strcmp(token, "skip")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_SKIP};
                     inst_needs_arg = false;
+                } else if(!strcmp(token, "cheat")) {
+                    quasm.program[quasm.program_size++] = (Inst) {.inst = INST_CHEAT};
+                    inst_needs_arg = false;
                 } else if(!strcmp(token, "eq")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_EQ};
                     inst_needs_arg = false;

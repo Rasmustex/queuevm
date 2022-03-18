@@ -1,0 +1,8 @@
+enq 1
+enq 2
+enq 3
+enq 4
+skip
+cheat
+subi
+halt
