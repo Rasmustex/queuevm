@@ -21,13 +21,15 @@ char token[MAX_TOK];
 // maybe add register and instruction as separate type
 typedef enum {
     NAME,
-    NUM,
+    TOK_INT,
+    TOK_FLOAT,
 } TOKEN_TYPE;
 
 const char *token_type_as_string(TOKEN_TYPE t) {
     switch (t) {
     case NAME: return "NAME";
-    case NUM: return "NUM";
+    case TOK_INT: return "TOK_INT";
+    case TOK_FLOAT: return "TOK_FLOAT";
     default: return "Unreachable token type";
     }
 }
@@ -114,6 +116,18 @@ int main(int argc, const char **argv) {
                 } else if(!strcmp(token, "subi")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_SUBI};
                     inst_needs_arg = false;
+                } else if(!strcmp(token, "addu")) {
+                    quasm.program[quasm.program_size++] = (Inst) {.inst = INST_ADDU};
+                    inst_needs_arg = false;
+                } else if(!strcmp(token, "subu")) {
+                    quasm.program[quasm.program_size++] = (Inst) {.inst = INST_SUBU};
+                    inst_needs_arg = false;
+                } else if(!strcmp(token, "addf")) {
+                    quasm.program[quasm.program_size++] = (Inst) {.inst = INST_ADDF};
+                    inst_needs_arg = false;
+                } else if(!strcmp(token, "subf")) {
+                    quasm.program[quasm.program_size++] = (Inst) {.inst = INST_SUBF};
+                    inst_needs_arg = false;
                 } else if(!strcmp(token, "dup")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_DUP};
                     inst_needs_arg = false;
@@ -149,9 +163,20 @@ int main(int argc, const char **argv) {
                 return 1;
             }
             break;
-        case NUM:
+        case TOK_INT:
             if(inst_needs_arg) {
                 quasm.program[quasm.program_size].arg.u64 = atoll(token);
+                inst_needs_arg = false;
+                quasm.program_size++;
+            } else {
+                fprintf(stderr, "Error: instruction '%s' does not take a number argument\n", token);
+                fclose(f);
+                return 1;
+            }
+            break;
+        case TOK_FLOAT:
+            if(inst_needs_arg) {
+                quasm.program[quasm.program_size].arg.f64 = atof(token);
                 inst_needs_arg = false;
                 quasm.program_size++;
             } else {
@@ -172,6 +197,7 @@ int main(int argc, const char **argv) {
 
 TOKEN_TYPE lex(FILE *f) {
     char *p = token;
+    uint64_t dotcount = 0;
     register char c;
     while((c = fgetc(f)) == ' ' || c == '\t' || c == '\n')
         ;
@@ -186,14 +212,22 @@ TOKEN_TYPE lex(FILE *f) {
         ungetc(c, f);
         return tt = NAME;
     } else if(isdigit(c) || c == '-') {
-        for(*p++ = c; isdigit(c = fgetc(f)) && p - token < MAX_TOK - 1;)
+        for(*p++ = c; (isdigit(c = fgetc(f)) || c == '.') && p - token < MAX_TOK - 1;) {
+            if(c == '.')
+                ++dotcount;
             *p++ = c;
+        }
         *p = '\0';
         if(!isspace(c) && c != EOF) {
-            fprintf(stderr, "Error: number token '%s' cannot contain non-digit: '%c'\n", token, c);
+            fprintf(stderr, "Error: number token '%s' cannot contain character that is neither number or '.': '%c'\n", token, c);
             exit(1);
         }
         ungetc(c, f);
-        return tt = NUM;
+        if(dotcount) {
+            if(dotcount != 1) {
+                fprintf(stderr, "Error: number token '%s' contains too many '.'\n", token);
+                exit(1);
+            } else return tt = TOK_FLOAT;
+        } else return tt = TOK_INT;
     } else return tt = c;
 }

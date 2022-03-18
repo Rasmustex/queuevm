@@ -1,0 +1,15 @@
+enq 10.0
+enq 30.0
+addf
+deq
+
+enq 10
+enq 30
+addu
+deq
+
+enq -10
+enq 5
+subi
+deq
+halt
