@@ -36,20 +36,6 @@ const char *inst_as_str(INST inst) {
     }
 }
 
-bool qvm_inst_advances_ip[INST_COUNT] = {
-    [INST_NOP] = true,
-    [INST_ENQUEUE] = true,
-    [INST_DEQUEUE] = true,
-    [INST_SUBI] = true,
-    [INST_DUP] = true,
-    [INST_SKIP] = true,
-    [INST_EQ] = true,
-    [INST_JUMP] = false,
-    [INST_JZ] = false,
-    [INST_JNZ] = false,
-    [INST_HALT] = true,
-};
-
 // TODO: better error handling
 
 // TODO: Add enqueue error handling
