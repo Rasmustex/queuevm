@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.18)
 
 SET(CMAKE_C_COMPILER       "/usr/bin/clang")
 SET(CMAKE_C_FLAGS          "-std=c11 -Wall -Wextra -pedantic -Wswitch-enum")
