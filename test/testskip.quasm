@@ -1,8 +1,9 @@
-enq 1
-enq 2
-enq 3
-enq 4
-skip
-cheat
-subi
+; Comments indicate expected queue - this is to test comments
+enq 1 ; 1
+enq 2 ; 1 2
+enq 3 ; 1 2 3
+enq 4 ; 1 2 3 4
+skip  ; 4 1 2 3
+cheat ; 1 4 2 3
+subi  ; 2 3 3
 halt

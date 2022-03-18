@@ -229,5 +229,12 @@ TOKEN_TYPE lex(FILE *f) {
                 exit(1);
             } else return tt = TOK_FLOAT;
         } else return tt = TOK_INT;
-    } else return tt = c;
+    } else if(c == ';') { // comment
+        while((c = fgetc(f)) != '\n' && c != EOF)
+            ;
+        if(c == EOF)
+            return EOF;
+        else return lex(f);
+    }
+    else return tt = c;
 }
