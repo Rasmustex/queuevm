@@ -108,11 +108,11 @@ int main(int argc, const char **argv) {
                     // TODO: change to dequeue into register, and add drop inst
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_DEQUEUE};
                     inst_needs_arg = false;
-                } else if(!strcmp(token, "add")) {
-                    quasm.program[quasm.program_size++] = (Inst) {.inst = INST_ADD};
+                } else if(!strcmp(token, "addi")) {
+                    quasm.program[quasm.program_size++] = (Inst) {.inst = INST_ADDI};
                     inst_needs_arg = false;
-                } else if(!strcmp(token, "sub")) {
-                    quasm.program[quasm.program_size++] = (Inst) {.inst = INST_SUB};
+                } else if(!strcmp(token, "subi")) {
+                    quasm.program[quasm.program_size++] = (Inst) {.inst = INST_SUBI};
                     inst_needs_arg = false;
                 } else if(!strcmp(token, "dup")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_DUP};
@@ -148,7 +148,7 @@ int main(int argc, const char **argv) {
             break;
         case NUM:
             if(inst_needs_arg) {
-                quasm.program[quasm.program_size].arg = atol(token);
+                quasm.program[quasm.program_size].arg.u64 = atoll(token);
                 inst_needs_arg = false;
                 quasm.program_size++;
             } else {
@@ -182,7 +182,7 @@ TOKEN_TYPE lex(FILE *f) {
         }
         ungetc(c, f);
         return tt = NAME;
-    } else if(isdigit(c)) {
+    } else if(isdigit(c) || c == '-') {
         for(*p++ = c; isdigit(c = fgetc(f)) && p - token < MAX_TOK - 1;)
             *p++ = c;
         *p = '\0';

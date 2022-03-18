@@ -1,7 +1,7 @@
 enq 10
 enq 1
 skip
-sub
+subi
 dup
 enq 0
 skip

@@ -7,7 +7,6 @@
 #include <stdbool.h>
 
 #define PROGRAM_CAP 1024
-#define Word uint64_t
 
 typedef enum {
     ERR_OK,
@@ -21,13 +20,13 @@ typedef enum {
     INST_NOP,
     INST_ENQUEUE,
     INST_DEQUEUE,
-    INST_ADD,
-    INST_SUB,
+    INST_ADDI,
+    INST_SUBI,
     INST_DUP, // Needs a better name like "BOOT" (booting copy of front to back of queue)
     INST_SKIP, // Back of queue skips to front and drags front back
     INST_EQ,
     INST_JUMP,
-    INST_JZ,
+    INST_JZ, // TODO: Zero flag
     INST_JNZ,
     INST_HALT,
     INST_COUNT,

@@ -1,5 +1,6 @@
 #include "qvm.h"
 #include "queue/queue.h"
+#include <assert.h>
 #include <errno.h>
 #include <stdint.h>
 #include <string.h>
@@ -22,8 +23,8 @@ const char *inst_as_str(INST inst) {
     case INST_NOP:            return "INST_NOP";
     case INST_ENQUEUE:        return "INST_ENQUEUE";
     case INST_DEQUEUE:        return "INST_DEQUEUE";
-    case INST_ADD:            return "INST_ADD";
-    case INST_SUB:            return "INST_SUB";
+    case INST_ADDI:           return "INST_ADDI";
+    case INST_SUBI:           return "INST_SUBI";
     case INST_DUP:            return "INST_DUP";
     case INST_SKIP:           return "INST_SKIP";
     case INST_EQ:             return "INST_EQ";
@@ -34,6 +35,20 @@ const char *inst_as_str(INST inst) {
     case INST_COUNT: default: return "Unreachable instruction";
     }
 }
+
+bool qvm_inst_advances_ip[INST_COUNT] = {
+    [INST_NOP] = true,
+    [INST_ENQUEUE] = true,
+    [INST_DEQUEUE] = true,
+    [INST_SUBI] = true,
+    [INST_DUP] = true,
+    [INST_SKIP] = true,
+    [INST_EQ] = true,
+    [INST_JUMP] = false,
+    [INST_JZ] = false,
+    [INST_JNZ] = false,
+    [INST_HALT] = true,
+};
 
 // TODO: better error handling
 
@@ -54,69 +69,73 @@ ERR qvm_inst_exec(Qvm *qvm) {
         else
             dequeue(&qvm->queue);
         break;
-    case INST_ADD: {
-        if(qvm->queue.size < 2) {
+    case INST_ADDI: {
+        if(qvm->queue.element_count < 2) {
             return ERR_QUEUE_UNDERFLOW;
         }
         Word a = dequeue(&qvm->queue);
-        if(enqueue(&qvm->queue, a + dequeue(&qvm->queue)) != 0)
+        if(enqueue(&qvm->queue, (Word){.i64 = a.i64 + dequeue(&qvm->queue).i64}) != 0)
             return ERR_QUEUE_REALLOC;
         break;
-    } case INST_SUB: {
-        if(qvm->queue.size < 2) {
+    } case INST_SUBI: {
+        if(qvm->queue.element_count < 2) {
             return ERR_QUEUE_UNDERFLOW;
         }
         Word a = dequeue(&qvm->queue);
-        if(enqueue(&qvm->queue, dequeue(&qvm->queue) - a) != 0)
+        if(enqueue(&qvm->queue, (Word){.i64 = dequeue(&qvm->queue).i64 - a.i64}) != 0)
             return ERR_QUEUE_REALLOC;
         break;
     } case INST_DUP:
-        if(enqueue(&qvm->queue, queue_front(&qvm->queue)) != 0)
+        if(queue_empty(&qvm->queue))
+            return ERR_QUEUE_UNDERFLOW;
+        else if(enqueue(&qvm->queue, queue_front(&qvm->queue)) != 0)
             return ERR_QUEUE_REALLOC;
         break;
     case INST_SKIP:
-        if(qvm->queue.size < 2)
+        if(qvm->queue.element_count < 2)
             return ERR_QUEUE_UNDERFLOW;
 
         queue_skip(&qvm->queue);
         break;
     case INST_EQ: {
-        if(qvm->queue.size < 2) {
+        if(qvm->queue.element_count < 2) {
             return ERR_QUEUE_UNDERFLOW;
         }
         Word a = dequeue(&qvm->queue);
-        if(enqueue(&qvm->queue, a == dequeue(&qvm->queue)) != 0)
+        if(enqueue(&qvm->queue, (Word){.i64 = a.i64 == dequeue(&qvm->queue).i64}) != 0)
             return ERR_QUEUE_REALLOC;
         break;
     } case INST_JUMP:
-        if(qvm->program[qvm->ip].arg > qvm->program_size) // ip is word which is uint (for now) and will always be read here as such - so no risk of negative ip
+        if(qvm->program[qvm->ip].arg.u64 > qvm->program_size) // ip is word which is uint (for now) and will always be read here as such - so no risk of negative ip
             return ERR_BAD_INST_PTR;
         else
-            qvm->ip = qvm->program[qvm->ip].arg - 1; // minus one to account for increment at end of function
+            qvm->ip = qvm->program[qvm->ip].arg.u64 - 1; // minus one to account for increment at end of function
         break;
     case INST_JZ:
-        if(qvm->queue.size < 1)
+        if(qvm->queue.element_count < 1)
             return ERR_QUEUE_UNDERFLOW;
 
-        if(qvm->program[qvm->ip].arg > qvm->program_size) // ip is word which is uint (for now) and will always be read here as such - so no risk of negative ip
+        if(qvm->program[qvm->ip].arg.u64 > qvm->program_size) // ip is word which is uint (for now) and will always be read here as such - so no risk of negative ip
             return ERR_BAD_INST_PTR;
-        else if(dequeue(&qvm->queue) == 0)
-            qvm->ip = qvm->program[qvm->ip].arg; // minus one to account for increment at end of function
+        else if(dequeue(&qvm->queue).u64 == 0)
+            qvm->ip = qvm->program[qvm->ip].arg.u64 - 1; // minus one to account for increment at end of function
         break;
     case INST_JNZ:
-        if(qvm->queue.size < 1)
+        if(qvm->queue.element_count < 1)
             return ERR_QUEUE_UNDERFLOW;
 
-        if(qvm->program[qvm->ip].arg > qvm->program_size) // ip is word which is uint (for now) and will always be read here as such - so no risk of negative ip
+        if(qvm->program[qvm->ip].arg.u64 > qvm->program_size) // ip is word which is uint (for now) and will always be read here as such - so no risk of negative ip
             return ERR_BAD_INST_PTR;
-        else if(dequeue(&qvm->queue) != 0)
-            qvm->ip = qvm->program[qvm->ip].arg - 1; // minus one to account for increment at end of function
+        else if(dequeue(&qvm->queue).u64 != 0)
+            qvm->ip = qvm->program[qvm->ip].arg.u64 - 1; // minus one to account for increment at end of function
         break;
     case INST_COUNT: case INST_HALT: default:
         return ERR_ILLEGAL_INST;
         break;
     }
+
     qvm->ip++;
+
     return (qvm->ip >= qvm->program_size) * ERR_BAD_INST_PTR;
 }
 
