@@ -1,13 +1,13 @@
 enq 10
-enq 1
-cheat
-subi
-dup
-lda
-sta
-enq 0
-skip
-eq 
-cheat
-jz 1
+loop:
+    enq 1
+    cheat
+    subi
+    dup
+    lda
+    enq 0
+    skip
+    eq 
+    cheat
+    jz loop
 halt

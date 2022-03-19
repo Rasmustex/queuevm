@@ -1,6 +1,7 @@
 #include <qvm/qvm.h>
 #include <ctype.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
@@ -20,15 +21,17 @@ Quasm quasm = {0};
 char token[MAX_TOK];
 // maybe add register and instruction as separate type
 typedef enum {
-    NAME,
+    TOK_NAME,
+    TOK_LABEL,
     TOK_INT,
     TOK_FLOAT,
 } TOKEN_TYPE;
 
 const char *token_type_as_string(TOKEN_TYPE t) {
     switch (t) {
-    case NAME: return "NAME";
-    case TOK_INT: return "TOK_INT";
+    case TOK_NAME:  return "TOK_NAME";
+    case TOK_LABEL: return "TOK_LABEL";
+    case TOK_INT:   return "TOK_INT";
     case TOK_FLOAT: return "TOK_FLOAT";
     default: return "Unreachable token type";
     }
@@ -36,6 +39,18 @@ const char *token_type_as_string(TOKEN_TYPE t) {
 
 TOKEN_TYPE tt;
 TOKEN_TYPE lex(FILE *f);
+
+typedef struct {
+    char name[MAX_TOK];
+    uint64_t ip;
+} Label;
+
+#define MAX_LABELS 1024
+Label labels[MAX_LABELS];
+uint64_t label_sp = 0;
+uint64_t get_label_ip(const char* name, int *err);
+Label deferred_operands[MAX_LABELS];
+uint64_t deferred_operands_sp = 0;
 
 int main(int argc, const char **argv) {
     if(argc < 2) {
@@ -97,7 +112,7 @@ int main(int argc, const char **argv) {
     bool inst_needs_arg = false;
     while((int)lex(f) != EOF) {
         switch (tt) {
-        case NAME:
+        case TOK_NAME:
             if(!inst_needs_arg) {
                 if(!strcmp(token, "nop")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_NOP};
@@ -167,10 +182,28 @@ int main(int argc, const char **argv) {
                     return 1;
                 }
             } else {
-                fprintf(stderr, "Error: name '%s' is not a valid instruction argument\n", token);
-                fclose(f);
-                return 1;
+                int err;
+                uint64_t label_ip;
+                label_ip = get_label_ip(token, &err);
+                if(err) {
+                    assert(label_sp < MAX_LABELS && "Exceeded label stack capacity");
+                    strncpy(deferred_operands[deferred_operands_sp].name, token, MAX_LABELS);
+                    deferred_operands[deferred_operands_sp].ip = quasm.program_size;
+                    ++deferred_operands_sp;
+                    /* fprintf(stderr, "Error: name '%s' is not a valid instruction argument\n", token); */
+                    /* fclose(f); */
+                    /* return 1; */
+                } else {
+                    quasm.program[quasm.program_size].arg.u64 = label_ip;
+                }
+                quasm.program_size++;
+                inst_needs_arg = false;
             }
+            break;
+        case TOK_LABEL:
+            assert(label_sp < MAX_LABELS && "Exceeded label stack capacity");
+            strncpy(labels[label_sp].name, token, MAX_TOK);
+            labels[label_sp++].ip = quasm.program_size;
             break;
         case TOK_INT:
             if(inst_needs_arg) {
@@ -201,6 +234,19 @@ int main(int argc, const char **argv) {
         }
     }
     fclose(f);
+    int err;
+    uint64_t label_ip;
+    for(uint64_t i = 0; i < deferred_operands_sp; ++i) {
+        label_ip = get_label_ip(deferred_operands[i].name, &err);
+        if(err) {
+            fprintf(stderr, "Error: name '%s' is not a valid instruction argument or label\n", deferred_operands[i].name);
+            fclose(f);
+            return 1;
+        } else {
+            quasm.program[deferred_operands[i].ip].arg.u64 = label_ip;
+            printf("found reference for instruction type '%s' with ip '%lu': %lu\n", inst_as_str(quasm.program[deferred_operands[i].ip].inst), deferred_operands[i].ip, quasm.program[deferred_operands[i].ip].arg.u64);
+        }
+    }
     quasm_dump_program_to_file(&quasm, oname);
 }
 
@@ -214,12 +260,16 @@ TOKEN_TYPE lex(FILE *f) {
         for(*p++ = c; (isalnum(c = fgetc(f)) || c == '_') && p - token < MAX_TOK - 1;)
             *p++ = c;
         *p = '\0';
-        if(!isspace(c) && c != EOF) {
+        if(!isspace(c) && c != ':' && c != EOF) {
             fprintf(stderr, "Error: non-number token '%s' contains illegal character: '%c'\n", token, c);
             exit(1);
         }
-        ungetc(c, f);
-        return tt = NAME;
+        if(c == ':') {
+            return tt = TOK_LABEL;
+        } else {
+            ungetc(c, f);
+            return tt = TOK_NAME;
+        }
     } else if(isdigit(c) || c == '-') {
         for(*p++ = c; (isdigit(c = fgetc(f)) || c == '.') && p - token < MAX_TOK - 1;) {
             if(c == '.')
@@ -246,4 +296,15 @@ TOKEN_TYPE lex(FILE *f) {
         else return lex(f);
     }
     else return tt = c;
+}
+
+uint64_t get_label_ip(const char* name, int *err) {
+    for(uint64_t i = 0; i < label_sp; ++i) {
+        if(!strcmp(name, labels[i].name)) {
+            *err = 0;
+            return labels[i].ip;
+        }
+    }
+    *err = 1;
+    return 0;
 }

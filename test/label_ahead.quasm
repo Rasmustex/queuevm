@@ -1,0 +1,8 @@
+enq 0
+jz main
+enq 1
+enq 2
+main:
+    enq 3
+    enq 4
+halt

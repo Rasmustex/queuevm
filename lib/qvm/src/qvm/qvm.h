@@ -56,6 +56,7 @@ typedef struct {
 ERR qvm_inst_exec(Qvm *qvm);
 void qvm_run(Qvm *qvm, bool debug, int64_t limit);
 void qvm_load_program_from_file(Qvm *qvm, const char *fname);
+const char *inst_as_str(INST inst);
 // TODO: separate library
 typedef struct {
     Inst program[PROGRAM_CAP];
