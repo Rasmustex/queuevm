@@ -14,7 +14,6 @@ void print_help(FILE *f, const char *progname) {
     fprintf(f, "\t-h            print this help menu\n");
 }
 
-Quasm quasm = {0};
 // Tokeniser stuff should be moved into separate lib
 // Alternatively, it could instead be simplified
 #define MAX_TOK 1024
@@ -53,29 +52,9 @@ Label deferred_operands[MAX_LABELS];
 uint64_t deferred_operands_sp;
 
 uint64_t lineno, prev_charno, charno;
-
-int fgetcc(FILE *f) {
-    int c;
-    prev_charno = charno;
-    if((c = fgetc(f)) == '\n') {
-        charno = 0;
-        ++lineno;
-    }
-    ++charno;
-    return c;
-}
-
-void ungetcc(int c, FILE *f) {
-    if(c == '\n') {
-        --lineno;
-        charno = prev_charno;
-    } else {
-        --charno;
-    }
-    ungetc(c, f);
-}
-
 #define HERE(x, y) "%s:%lu:%lu: " y, x, lineno, charno
+
+Quasm quasm = {0};
 
 int main(int argc, const char **argv) {
     if(argc < 2) {
@@ -291,6 +270,27 @@ int main(int argc, const char **argv) {
         }
     }
     quasm_dump_program_to_file(&quasm, oname);
+}
+
+int fgetcc(FILE *f) {
+    int c;
+    prev_charno = charno;
+    if((c = fgetc(f)) == '\n') {
+        charno = 0;
+        ++lineno;
+    }
+    ++charno;
+    return c;
+}
+
+void ungetcc(int c, FILE *f) {
+    if(c == '\n') {
+        --lineno;
+        charno = prev_charno;
+    } else {
+        --charno;
+    }
+    ungetc(c, f);
 }
 
 TOKEN_TYPE lex(FILE *f, const char *fname) {
