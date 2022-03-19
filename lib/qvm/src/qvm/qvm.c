@@ -32,6 +32,8 @@ const char *inst_as_str(INST inst) {
     case INST_DUP:            return "INST_DUP";
     case INST_SKIP:           return "INST_SKIP";
     case INST_CHEAT:          return "INST_CHEAT";
+    case INST_LDA:            return "INST_LDA";
+    case INST_STA:            return "INST_STA";
     case INST_EQ:             return "INST_EQ";
     case INST_JUMP:           return "INST_JUMP";
     case INST_JZ:             return "INST_JZ";
@@ -57,6 +59,8 @@ ERR qvm_inst_exec(Qvm *qvm) {
         // TODO: change to dequeue into register, and add drop inst
         if(queue_empty(&qvm->queue))
             return ERR_QUEUE_UNDERFLOW;
+        else if (qvm->program[qvm->ip].arg.u64 == 'a')
+            qvm->a = dequeue(&qvm->queue);
         else
             dequeue(&qvm->queue);
         break;
@@ -126,6 +130,15 @@ ERR qvm_inst_exec(Qvm *qvm) {
 
         queue_cheat(&qvm->queue);
         break;
+    case INST_LDA: // load front of queue into a - does not consumes queue item
+        if(queue_empty(&qvm->queue))
+            return ERR_QUEUE_UNDERFLOW;
+        qvm->a = queue_front(&qvm->queue);
+        break;
+    case INST_STA:
+        if(enqueue(&qvm->queue, qvm->a) != 0)
+            return ERR_QUEUE_REALLOC;
+        break;
     case INST_EQ: {
         if(qvm->queue.element_count < 2) {
             return ERR_QUEUE_UNDERFLOW;
@@ -176,12 +189,13 @@ void qvm_run(Qvm *qvm, bool debug, int64_t limit) {
             while(qvm->program[qvm->ip].inst != INST_HALT && i < limit) {
                 printf("IP: %ld\n", qvm->ip);
                 printf("Inst: %s\n", inst_as_str(qvm->program[qvm->ip].inst));
+                printf("A: u64: %lu i64: %ld f64: %f ptr: %p\n",  qvm->a.u64, qvm->a.i64, qvm->a.f64, qvm->a.ptr64);
+                print_queue(&qvm->queue);
                 if((err = qvm_inst_exec(qvm))!= ERR_OK) {
                     fprintf(stderr, "Runtime error: %s\n", err_as_str(err));
                     free(qvm->queue.data);
                     exit(1);
                 }
-                print_queue(&qvm->queue);
                 getc(stdin);
                 ++i;
             }
@@ -189,12 +203,13 @@ void qvm_run(Qvm *qvm, bool debug, int64_t limit) {
             while(qvm->program[qvm->ip].inst != INST_HALT && i < limit) {
                 printf("IP: %ld\n", qvm->ip);
                 printf("Inst: %s\n", inst_as_str(qvm->program[qvm->ip].inst));
+                printf("A: u64: %lu i64: %ld f64: %f ptr: %p\n",  qvm->a.u64, qvm->a.i64, qvm->a.f64, qvm->a.ptr64);
+                print_queue(&qvm->queue); // will be removed once print instructions introduced
                 if((err = qvm_inst_exec(qvm))!= ERR_OK) {
                     fprintf(stderr, "Runtime error: %s\n", err_as_str(err));
                     free(qvm->queue.data);
                     exit(1);
                 }
-                print_queue(&qvm->queue); // will be removed once print instructions introduced
                 ++i;
             }
         }
@@ -203,24 +218,26 @@ void qvm_run(Qvm *qvm, bool debug, int64_t limit) {
             while(qvm->program[qvm->ip].inst != INST_HALT) {
                 printf("IP: %ld\n", qvm->ip);
                 printf("Inst: %s\n", inst_as_str(qvm->program[qvm->ip].inst));
+                printf("A: u64: %lu i64: %ld f64: %f ptr: %p\n",  qvm->a.u64, qvm->a.i64, qvm->a.f64, qvm->a.ptr64);
+                print_queue(&qvm->queue);
                 if((err = qvm_inst_exec(qvm))!= ERR_OK) {
                     fprintf(stderr, "Runtime error: %s\n", err_as_str(err));
                     free(qvm->queue.data);
                     exit(1);
                 }
-                print_queue(&qvm->queue);
                 getc(stdin);
             }
         } else {
             while(qvm->program[qvm->ip].inst != INST_HALT) {
                 printf("IP: %ld\n", qvm->ip);
                 printf("Inst: %s\n", inst_as_str(qvm->program[qvm->ip].inst));
+                printf("A: u64: %lu i64: %ld f64: %f ptr: %p\n",  qvm->a.u64, qvm->a.i64, qvm->a.f64, qvm->a.ptr64);
+                print_queue(&qvm->queue); // will be removed once print instructions introduced
                 if((err = qvm_inst_exec(qvm))!= ERR_OK) {
                     fprintf(stderr, "Runtime error: %s\n", err_as_str(err));
                     free(qvm->queue.data);
                     exit(1);
                 }
-                print_queue(&qvm->queue); // will be removed once print instructions introduced
             }
         }
     }

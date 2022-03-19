@@ -137,6 +137,15 @@ int main(int argc, const char **argv) {
                 } else if(!strcmp(token, "cheat")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_CHEAT};
                     inst_needs_arg = false;
+                } else if(!strcmp(token, "lda")) {
+                    quasm.program[quasm.program_size++] = (Inst) {.inst = INST_LDA};
+                    inst_needs_arg = false;
+                } else if(!strcmp(token, "sta")) {
+                    quasm.program[quasm.program_size++] = (Inst) {.inst = INST_STA};
+                    inst_needs_arg = false;
+                } else if(!strcmp(token, "deqa")) {
+                    quasm.program[quasm.program_size++] = (Inst) {.inst = INST_DEQUEUE, .arg.u64 = 'a'};
+                    inst_needs_arg = false;
                 } else if(!strcmp(token, "eq")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_EQ};
                     inst_needs_arg = false;
@@ -219,7 +228,7 @@ TOKEN_TYPE lex(FILE *f) {
         }
         *p = '\0';
         if(!isspace(c) && c != EOF) {
-            fprintf(stderr, "Error: number token '%s' cannot contain character that is neither number or '.': '%c'\n", token, c);
+            fprintf(stderr, "Error: number token '%s' cannot contain character that is neither number nor '.': '%c'\n", token, c);
             exit(1);
         }
         ungetc(c, f);

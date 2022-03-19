@@ -29,6 +29,8 @@ typedef enum {
     INST_DUP, // Needs a better name like "BOOT" (booting copy of front to back of queue)
     INST_SKIP, // Back of queue skips to front and drags front back
     INST_CHEAT,
+    INST_LDA,
+    INST_STA,
     INST_EQ,
     INST_JUMP,
     INST_JZ, // TODO: Zero flag
