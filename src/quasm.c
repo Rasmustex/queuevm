@@ -143,6 +143,24 @@ int main(int argc, const char **argv) {
                 } else if(!strcmp(token, "subf")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_SUBF};
                     inst_needs_arg = false;
+                } else if(!strcmp(token, "muli")) {
+                    quasm.program[quasm.program_size++] = (Inst) {.inst = INST_MULI};
+                    inst_needs_arg = false;
+                } else if(!strcmp(token, "divi")) {
+                    quasm.program[quasm.program_size++] = (Inst) {.inst = INST_DIVI};
+                    inst_needs_arg = false;
+                } else if(!strcmp(token, "mulu")) {
+                    quasm.program[quasm.program_size++] = (Inst) {.inst = INST_MULU};
+                    inst_needs_arg = false;
+                } else if(!strcmp(token, "divu")) {
+                    quasm.program[quasm.program_size++] = (Inst) {.inst = INST_DIVU};
+                    inst_needs_arg = false;
+                } else if(!strcmp(token, "mulf")) {
+                    quasm.program[quasm.program_size++] = (Inst) {.inst = INST_MULF};
+                    inst_needs_arg = false;
+                } else if(!strcmp(token, "divf")) {
+                    quasm.program[quasm.program_size++] = (Inst) {.inst = INST_DIVF};
+                    inst_needs_arg = false;
                 } else if(!strcmp(token, "dup")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_DUP};
                     inst_needs_arg = false;
@@ -190,9 +208,6 @@ int main(int argc, const char **argv) {
                     strncpy(deferred_operands[deferred_operands_sp].name, token, MAX_LABELS);
                     deferred_operands[deferred_operands_sp].ip = quasm.program_size;
                     ++deferred_operands_sp;
-                    /* fprintf(stderr, "Error: name '%s' is not a valid instruction argument\n", token); */
-                    /* fclose(f); */
-                    /* return 1; */
                 } else {
                     quasm.program[quasm.program_size].arg.u64 = label_ip;
                 }
@@ -244,7 +259,6 @@ int main(int argc, const char **argv) {
             return 1;
         } else {
             quasm.program[deferred_operands[i].ip].arg.u64 = label_ip;
-            printf("found reference for instruction type '%s' with ip '%lu': %lu\n", inst_as_str(quasm.program[deferred_operands[i].ip].inst), deferred_operands[i].ip, quasm.program[deferred_operands[i].ip].arg.u64);
         }
     }
     quasm_dump_program_to_file(&quasm, oname);

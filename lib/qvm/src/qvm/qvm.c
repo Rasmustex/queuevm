@@ -29,6 +29,12 @@ const char *inst_as_str(INST inst) {
     case INST_SUBU:           return "INST_SUBU";
     case INST_ADDF:           return "INST_ADDF";
     case INST_SUBF:           return "INST_SUBF";
+    case INST_MULI:           return "INST_MULI";
+    case INST_DIVI:           return "INST_DIVI";
+    case INST_MULU:           return "INST_MULU";
+    case INST_DIVU:           return "INST_DIVU";
+    case INST_MULF:           return "INST_MULF";
+    case INST_DIVF:           return "INST_DIVF";
     case INST_DUP:            return "INST_DUP";
     case INST_SKIP:           return "INST_SKIP";
     case INST_CHEAT:          return "INST_CHEAT";
@@ -110,6 +116,54 @@ ERR qvm_inst_exec(Qvm *qvm) {
         }
         Word a = dequeue(&qvm->queue);
         if(enqueue(&qvm->queue, (Word){.f64 = dequeue(&qvm->queue).f64 - a.f64}) != 0)
+            return ERR_QUEUE_REALLOC;
+        break;
+    } case INST_MULI: {
+        if(qvm->queue.element_count < 2) {
+            return ERR_QUEUE_UNDERFLOW;
+        }
+        Word a = dequeue(&qvm->queue);
+        if(enqueue(&qvm->queue, (Word){.i64 = dequeue(&qvm->queue).i64 * a.i64}) != 0)
+            return ERR_QUEUE_REALLOC;
+        break;
+    } case INST_DIVI: {
+        if(qvm->queue.element_count < 2) {
+            return ERR_QUEUE_UNDERFLOW;
+        }
+        Word a = dequeue(&qvm->queue);
+        if(enqueue(&qvm->queue, (Word){.i64 = dequeue(&qvm->queue).i64 / a.i64}) != 0)
+            return ERR_QUEUE_REALLOC;
+        break;
+    } case INST_MULU: {
+        if(qvm->queue.element_count < 2) {
+            return ERR_QUEUE_UNDERFLOW;
+        }
+        Word a = dequeue(&qvm->queue);
+        if(enqueue(&qvm->queue, (Word){.u64 = dequeue(&qvm->queue).u64 * a.u64}) != 0)
+            return ERR_QUEUE_REALLOC;
+        break;
+    } case INST_DIVU: {
+        if(qvm->queue.element_count < 2) {
+            return ERR_QUEUE_UNDERFLOW;
+        }
+        Word a = dequeue(&qvm->queue);
+        if(enqueue(&qvm->queue, (Word){.u64 = dequeue(&qvm->queue).u64 / a.u64}) != 0)
+            return ERR_QUEUE_REALLOC;
+        break;
+    } case INST_MULF: {
+        if(qvm->queue.element_count < 2) {
+            return ERR_QUEUE_UNDERFLOW;
+        }
+        Word a = dequeue(&qvm->queue);
+        if(enqueue(&qvm->queue, (Word){.f64 = dequeue(&qvm->queue).f64 * a.f64}) != 0)
+            return ERR_QUEUE_REALLOC;
+        break;
+    } case INST_DIVF: {
+        if(qvm->queue.element_count < 2) {
+            return ERR_QUEUE_UNDERFLOW;
+        }
+        Word a = dequeue(&qvm->queue);
+        if(enqueue(&qvm->queue, (Word){.f64 = dequeue(&qvm->queue).f64 / a.f64}) != 0)
             return ERR_QUEUE_REALLOC;
         break;
     } case INST_DUP:

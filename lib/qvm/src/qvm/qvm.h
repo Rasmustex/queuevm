@@ -26,6 +26,12 @@ typedef enum {
     INST_SUBU,
     INST_ADDF,
     INST_SUBF,
+    INST_MULI,
+    INST_DIVI,
+    INST_MULU,
+    INST_DIVU,
+    INST_MULF,
+    INST_DIVF,
     INST_DUP, // Needs a better name like "BOOT" (booting copy of front to back of queue)
     INST_SKIP, // Back of queue skips to front and drags front back
     INST_CHEAT,
