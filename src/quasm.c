@@ -38,7 +38,7 @@ const char *token_type_as_string(TOKEN_TYPE t) {
 }
 
 TOKEN_TYPE tt;
-TOKEN_TYPE lex(FILE *f);
+TOKEN_TYPE lex(FILE *f, const char *fname);
 
 typedef struct {
     char name[MAX_TOK];
@@ -47,10 +47,35 @@ typedef struct {
 
 #define MAX_LABELS 1024
 Label labels[MAX_LABELS];
-uint64_t label_sp = 0;
+uint64_t label_sp;
 uint64_t get_label_ip(const char* name, int *err);
 Label deferred_operands[MAX_LABELS];
-uint64_t deferred_operands_sp = 0;
+uint64_t deferred_operands_sp;
+
+uint64_t lineno, prev_charno, charno;
+
+int fgetcc(FILE *f) {
+    int c;
+    prev_charno = charno;
+    if((c = fgetc(f)) == '\n') {
+        charno = 0;
+        ++lineno;
+    }
+    ++charno;
+    return c;
+}
+
+void ungetcc(int c, FILE *f) {
+    if(c == '\n') {
+        --lineno;
+        charno = prev_charno;
+    } else {
+        --charno;
+    }
+    ungetc(c, f);
+}
+
+#define HERE(x, y) "%s:%lu:%lu: " y, x, lineno, charno
 
 int main(int argc, const char **argv) {
     if(argc < 2) {
@@ -58,6 +83,10 @@ int main(int argc, const char **argv) {
         fprintf(stderr, "Error: no program name provided\n");
         return 1;
     }
+
+    label_sp = deferred_operands_sp = charno = 0;
+    lineno = 1;
+
     const char *arg, *iname, *oname;
     iname = NULL;
     oname = "out.qvm";
@@ -110,7 +139,7 @@ int main(int argc, const char **argv) {
     }
 
     bool inst_needs_arg = false;
-    while((int)lex(f) != EOF) {
+    while((int)lex(f, iname) != EOF) {
         switch (tt) {
         case TOK_NAME:
             if(!inst_needs_arg) {
@@ -195,7 +224,7 @@ int main(int argc, const char **argv) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_HALT};
                     inst_needs_arg = false;
                 } else {
-                    fprintf(stderr, "Error: unknown name '%s'\n", token);
+                    fprintf(stderr, HERE(iname, "Error: unknown name '%s'\n"), token);
                     fclose(f);
                     return 1;
                 }
@@ -226,7 +255,7 @@ int main(int argc, const char **argv) {
                 inst_needs_arg = false;
                 quasm.program_size++;
             } else {
-                fprintf(stderr, "Error: instruction '%s' does not take a number argument\n", token);
+                fprintf(stderr, HERE(iname, "Error: instruction '%s' does not take a number argument\n"), inst_as_str(quasm.program[quasm.program_size - 1].inst));
                 fclose(f);
                 return 1;
             }
@@ -237,13 +266,13 @@ int main(int argc, const char **argv) {
                 inst_needs_arg = false;
                 quasm.program_size++;
             } else {
-                fprintf(stderr, "Error: instruction '%s' does not take a number argument\n", token);
+                fprintf(stderr, HERE(iname, "Error: instruction '%s' does not take a number argument\n"), token);
                 fclose(f);
                 return 1;
             }
             break;
         default:
-            fprintf(stderr, "Error: token '%s' is not recognised\n", token);
+            fprintf(stderr, HERE(iname, "Error: token '%s' is not recognised\n"), token);
             fclose(f);
             return 1;
         }
@@ -254,7 +283,7 @@ int main(int argc, const char **argv) {
     for(uint64_t i = 0; i < deferred_operands_sp; ++i) {
         label_ip = get_label_ip(deferred_operands[i].name, &err);
         if(err) {
-            fprintf(stderr, "Error: name '%s' is not a valid instruction argument or label\n", deferred_operands[i].name);
+            fprintf(stderr, HERE(iname, "Error: name '%s' is not a valid instruction argument or label\n"), deferred_operands[i].name);
             fclose(f);
             return 1;
         } else {
@@ -264,50 +293,50 @@ int main(int argc, const char **argv) {
     quasm_dump_program_to_file(&quasm, oname);
 }
 
-TOKEN_TYPE lex(FILE *f) {
+TOKEN_TYPE lex(FILE *f, const char *fname) {
     char *p = token;
     uint64_t dotcount = 0;
     register char c;
-    while((c = fgetc(f)) == ' ' || c == '\t' || c == '\n')
+    while((c = fgetcc(f)) == ' ' || c == '\t' || c == '\n')
         ;
     if(isalpha(c)) {
-        for(*p++ = c; (isalnum(c = fgetc(f)) || c == '_') && p - token < MAX_TOK - 1;)
+        for(*p++ = c; (isalnum(c = fgetcc(f)) || c == '_') && p - token < MAX_TOK - 1;)
             *p++ = c;
         *p = '\0';
         if(!isspace(c) && c != ':' && c != EOF) {
-            fprintf(stderr, "Error: non-number token '%s' contains illegal character: '%c'\n", token, c);
+            fprintf(stderr, HERE(fname, "Error: non-number token '%s' contains illegal character: '%c'\n"), token, c);
             exit(1);
         }
         if(c == ':') {
             return tt = TOK_LABEL;
         } else {
-            ungetc(c, f);
+            ungetcc(c, f);
             return tt = TOK_NAME;
         }
     } else if(isdigit(c) || c == '-') {
-        for(*p++ = c; (isdigit(c = fgetc(f)) || c == '.') && p - token < MAX_TOK - 1;) {
+        for(*p++ = c; (isdigit(c = fgetcc(f)) || c == '.') && p - token < MAX_TOK - 1;) {
             if(c == '.')
                 ++dotcount;
             *p++ = c;
         }
         *p = '\0';
         if(!isspace(c) && c != EOF) {
-            fprintf(stderr, "Error: number token '%s' cannot contain character that is neither number nor '.': '%c'\n", token, c);
+            fprintf(stderr, HERE(fname, "Error: number token '%s' cannot contain character that is neither number nor '.': '%c'\n"), token, c);
             exit(1);
         }
-        ungetc(c, f);
+        ungetcc(c, f);
         if(dotcount) {
             if(dotcount != 1) {
-                fprintf(stderr, "Error: number token '%s' contains too many '.'\n", token);
+                fprintf(stderr, HERE(fname, "Error: number token '%s' contains too many '.'\n"), token);
                 exit(1);
             } else return tt = TOK_FLOAT;
         } else return tt = TOK_INT;
     } else if(c == ';') { // comment
-        while((c = fgetc(f)) != '\n' && c != EOF)
+        while((c = fgetcc(f)) != '\n' && c != EOF)
             ;
         if(c == EOF)
             return EOF;
-        else return lex(f);
+        else return lex(f, fname);
     }
     else return tt = c;
 }
