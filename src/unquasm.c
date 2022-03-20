@@ -1,9 +1,12 @@
 #include <qvm/qvm.h>
 #include <stdint.h>
+#include <string.h>
 #include <stdio.h>
 
 void print_help(FILE *f, const char *progname) {
     fprintf(f, "Usage: %s [OPTIONS] <filename.qvm>\t disassembles qvm bytecode file\n", progname);
+    fprintf(f, "OPTIONS:\n");
+    fprintf(f, "\t-h            print this help menu\n");
 }
 
 Qvm qvm = {0};
@@ -67,12 +70,14 @@ bool has_arg[INST_COUNT] = {
 int main(int argc, const char **argv) {
     if(argc < 2) {
         print_help(stderr, argv[0]);
-        fprintf(stderr, "Error: no file argument provided");
+        fprintf(stderr, "Error: no file argument provided\n");
         return 1;
+    } else if(!strcmp(argv[1], "-h")) {
+        print_help(stdout, argv[0]);
+        return 0;
     }
 
     const char *fname = argv[1];
-    queue_init(&qvm.queue);
     qvm_load_program_from_file(&qvm, fname);
     for(uint64_t i = 0; i < qvm.program_size; ++i) {
         printf("%s", inst_name[qvm.program[i].inst]);
