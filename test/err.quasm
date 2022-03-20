@@ -1,4 +1,5 @@
+jmp hello
 enq 1
 lda
 hej:
-sta wrong token
+sta 

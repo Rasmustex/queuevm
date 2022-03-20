@@ -16,8 +16,6 @@ void print_help(FILE *f, const char *progname) {
 
 // Tokeniser stuff should be moved into separate lib
 // Alternatively, it could instead be simplified
-#define MAX_TOK 1024
-char token[MAX_TOK];
 // maybe add register and instruction as separate type
 typedef enum {
     TOK_NAME,
@@ -36,12 +34,19 @@ const char *token_type_as_string(TOKEN_TYPE t) {
     }
 }
 
+#define MAX_TOK 1024
+typedef struct {
+    char content[MAX_TOK];
+    uint64_t lno, cno;
+} Token;
+Token token = {0};
+
 TOKEN_TYPE tt;
 TOKEN_TYPE lex(FILE *f, const char *fname);
 
 typedef struct {
     char name[MAX_TOK];
-    uint64_t ip;
+    uint64_t ip, lno, cno;
 } Label;
 
 #define MAX_LABELS 1024
@@ -52,7 +57,7 @@ Label deferred_operands[MAX_LABELS];
 uint64_t deferred_operands_sp;
 
 uint64_t lineno, prev_charno, charno;
-#define HERE(x, y) "%s:%lu:%lu: " y, x, lineno, charno
+#define HERE(x, y, z, a) "%s:%lu:%lu: " y, x, z, a
 
 Quasm quasm = {0};
 
@@ -122,99 +127,101 @@ int main(int argc, const char **argv) {
         switch (tt) {
         case TOK_NAME:
             if(!inst_needs_arg) {
-                if(!strcmp(token, "nop")) {
+                if(!strcmp(token.content, "nop")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_NOP};
                     inst_needs_arg = false;
-                }else if(!strcmp(token, "enq")) {
+                }else if(!strcmp(token.content, "enq")) {
                     // TODO: change to allow enqueue from register
                     quasm.program[quasm.program_size] = (Inst) {.inst = INST_ENQUEUE};
                     inst_needs_arg = true;
-                } else if(!strcmp(token, "deq")) {
+                } else if(!strcmp(token.content, "deq")) {
                     // TODO: change to dequeue into register, and add drop inst
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_DEQUEUE};
                     inst_needs_arg = false;
-                } else if(!strcmp(token, "addi")) {
+                } else if(!strcmp(token.content, "addi")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_ADDI};
                     inst_needs_arg = false;
-                } else if(!strcmp(token, "subi")) {
+                } else if(!strcmp(token.content, "subi")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_SUBI};
                     inst_needs_arg = false;
-                } else if(!strcmp(token, "addu")) {
+                } else if(!strcmp(token.content, "addu")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_ADDU};
                     inst_needs_arg = false;
-                } else if(!strcmp(token, "subu")) {
+                } else if(!strcmp(token.content, "subu")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_SUBU};
                     inst_needs_arg = false;
-                } else if(!strcmp(token, "addf")) {
+                } else if(!strcmp(token.content, "addf")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_ADDF};
                     inst_needs_arg = false;
-                } else if(!strcmp(token, "subf")) {
+                } else if(!strcmp(token.content, "subf")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_SUBF};
                     inst_needs_arg = false;
-                } else if(!strcmp(token, "muli")) {
+                } else if(!strcmp(token.content, "muli")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_MULI};
                     inst_needs_arg = false;
-                } else if(!strcmp(token, "divi")) {
+                } else if(!strcmp(token.content, "divi")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_DIVI};
                     inst_needs_arg = false;
-                } else if(!strcmp(token, "mulu")) {
+                } else if(!strcmp(token.content, "mulu")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_MULU};
                     inst_needs_arg = false;
-                } else if(!strcmp(token, "divu")) {
+                } else if(!strcmp(token.content, "divu")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_DIVU};
                     inst_needs_arg = false;
-                } else if(!strcmp(token, "mulf")) {
+                } else if(!strcmp(token.content, "mulf")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_MULF};
                     inst_needs_arg = false;
-                } else if(!strcmp(token, "divf")) {
+                } else if(!strcmp(token.content, "divf")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_DIVF};
                     inst_needs_arg = false;
-                } else if(!strcmp(token, "dup")) {
+                } else if(!strcmp(token.content, "dup")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_DUP};
                     inst_needs_arg = false;
-                } else if(!strcmp(token, "skip")) {
+                } else if(!strcmp(token.content, "skip")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_SKIP};
                     inst_needs_arg = false;
-                } else if(!strcmp(token, "cheat")) {
+                } else if(!strcmp(token.content, "cheat")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_CHEAT};
                     inst_needs_arg = false;
-                } else if(!strcmp(token, "lda")) {
+                } else if(!strcmp(token.content, "lda")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_LDA};
                     inst_needs_arg = false;
-                } else if(!strcmp(token, "sta")) {
+                } else if(!strcmp(token.content, "sta")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_STA};
                     inst_needs_arg = false;
-                } else if(!strcmp(token, "deqa")) {
+                } else if(!strcmp(token.content, "deqa")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_DEQUEUE, .arg.u64 = 'a'};
                     inst_needs_arg = false;
-                } else if(!strcmp(token, "eq")) {
+                } else if(!strcmp(token.content, "eq")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_EQ};
                     inst_needs_arg = false;
-                } else if(!strcmp(token, "jmp")) {
+                } else if(!strcmp(token.content, "jmp")) {
                     quasm.program[quasm.program_size] = (Inst) {.inst = INST_JUMP};
                     inst_needs_arg = true;
-                } else if(!strcmp(token, "jz")) {
+                } else if(!strcmp(token.content, "jz")) {
                     quasm.program[quasm.program_size] = (Inst) {.inst = INST_JZ};
                     inst_needs_arg = true;
-                } else if(!strcmp(token, "jnz")) {
+                } else if(!strcmp(token.content, "jnz")) {
                     quasm.program[quasm.program_size] = (Inst) {.inst = INST_JNZ};
                     inst_needs_arg = true;
-                } else if(!strcmp(token, "halt")) {
+                } else if(!strcmp(token.content, "halt")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_HALT};
                     inst_needs_arg = false;
                 } else {
-                    fprintf(stderr, HERE(iname, "Error: unknown name '%s'\n"), token);
+                    fprintf(stderr, HERE(iname, "Error: unknown name '%s'\n", token.lno, token.cno), token.content);
                     fclose(f);
                     return 1;
                 }
             } else {
                 int err;
                 uint64_t label_ip;
-                label_ip = get_label_ip(token, &err);
+                label_ip = get_label_ip(token.content, &err);
                 if(err) {
                     assert(label_sp < MAX_LABELS && "Exceeded label stack capacity");
-                    strncpy(deferred_operands[deferred_operands_sp].name, token, MAX_LABELS);
+                    strncpy(deferred_operands[deferred_operands_sp].name, token.content, MAX_LABELS);
                     deferred_operands[deferred_operands_sp].ip = quasm.program_size;
+                    deferred_operands[deferred_operands_sp].lno = token.lno;
+                    deferred_operands[deferred_operands_sp].cno = token.cno;
                     ++deferred_operands_sp;
                 } else {
                     quasm.program[quasm.program_size].arg.u64 = label_ip;
@@ -225,33 +232,33 @@ int main(int argc, const char **argv) {
             break;
         case TOK_LABEL:
             assert(label_sp < MAX_LABELS && "Exceeded label stack capacity");
-            strncpy(labels[label_sp].name, token, MAX_TOK);
+            strncpy(labels[label_sp].name, token.content, MAX_TOK);
             labels[label_sp++].ip = quasm.program_size;
             break;
         case TOK_INT:
             if(inst_needs_arg) {
-                quasm.program[quasm.program_size].arg.u64 = atoll(token);
+                quasm.program[quasm.program_size].arg.u64 = atoll(token.content);
                 inst_needs_arg = false;
                 quasm.program_size++;
             } else {
-                fprintf(stderr, HERE(iname, "Error: instruction '%s' does not take a number argument\n"), inst_as_str(quasm.program[quasm.program_size - 1].inst));
+                fprintf(stderr, HERE(iname, "Error: instruction '%s' does not take a number argument\n", token.lno, token.cno), inst_as_str(quasm.program[quasm.program_size - 1].inst));
                 fclose(f);
                 return 1;
             }
             break;
         case TOK_FLOAT:
             if(inst_needs_arg) {
-                quasm.program[quasm.program_size].arg.f64 = atof(token);
+                quasm.program[quasm.program_size].arg.f64 = atof(token.content);
                 inst_needs_arg = false;
                 quasm.program_size++;
             } else {
-                fprintf(stderr, HERE(iname, "Error: instruction '%s' does not take a number argument\n"), token);
+                fprintf(stderr, HERE(iname, "Error: instruction '%s' does not take a number argument\n", token.lno, token.cno), token.content);
                 fclose(f);
                 return 1;
             }
             break;
         default:
-            fprintf(stderr, HERE(iname, "Error: token '%s' is not recognised\n"), token);
+            fprintf(stderr, HERE(iname, "Error: token '%s' is not recognised\n", token.lno, token.cno), token.content);
             fclose(f);
             return 1;
         }
@@ -262,8 +269,7 @@ int main(int argc, const char **argv) {
     for(uint64_t i = 0; i < deferred_operands_sp; ++i) {
         label_ip = get_label_ip(deferred_operands[i].name, &err);
         if(err) {
-            fprintf(stderr, HERE(iname, "Error: name '%s' is not a valid instruction argument or label\n"), deferred_operands[i].name);
-            fclose(f);
+            fprintf(stderr, HERE(iname, "Error: name '%s' is not a valid instruction argument or label\n", deferred_operands[i].lno, deferred_operands[i].cno), deferred_operands[i].name);
             return 1;
         } else {
             quasm.program[deferred_operands[i].ip].arg.u64 = label_ip;
@@ -294,17 +300,21 @@ void ungetcc(int c, FILE *f) {
 }
 
 TOKEN_TYPE lex(FILE *f, const char *fname) {
-    char *p = token;
+    char *p = token.content;
     uint64_t dotcount = 0;
     register char c;
     while((c = fgetcc(f)) == ' ' || c == '\t' || c == '\n')
         ;
+
+    token.cno = charno;
+    token.lno = lineno;
+
     if(isalpha(c)) {
-        for(*p++ = c; (isalnum(c = fgetcc(f)) || c == '_') && p - token < MAX_TOK - 1;)
+        for(*p++ = c; (isalnum(c = fgetcc(f)) || c == '_') && p - token.content < MAX_TOK - 1;)
             *p++ = c;
         *p = '\0';
         if(!isspace(c) && c != ':' && c != EOF) {
-            fprintf(stderr, HERE(fname, "Error: non-number token '%s' contains illegal character: '%c'\n"), token, c);
+            fprintf(stderr, HERE(fname, "Error: non-number token '%s' contains illegal character: '%c'\n", token.lno, token.cno), token.content, c);
             exit(1);
         }
         if(c == ':') {
@@ -314,20 +324,20 @@ TOKEN_TYPE lex(FILE *f, const char *fname) {
             return tt = TOK_NAME;
         }
     } else if(isdigit(c) || c == '-') {
-        for(*p++ = c; (isdigit(c = fgetcc(f)) || c == '.') && p - token < MAX_TOK - 1;) {
+        for(*p++ = c; (isdigit(c = fgetcc(f)) || c == '.') && p - token.content < MAX_TOK - 1;) {
             if(c == '.')
                 ++dotcount;
             *p++ = c;
         }
         *p = '\0';
         if(!isspace(c) && c != EOF) {
-            fprintf(stderr, HERE(fname, "Error: number token '%s' cannot contain character that is neither number nor '.': '%c'\n"), token, c);
+            fprintf(stderr, HERE(fname, "Error: number token '%s' cannot contain character that is neither number nor '.': '%c'\n", token.lno, token.cno), token.content, c);
             exit(1);
         }
         ungetcc(c, f);
         if(dotcount) {
             if(dotcount != 1) {
-                fprintf(stderr, HERE(fname, "Error: number token '%s' contains too many '.'\n"), token);
+                fprintf(stderr, HERE(fname, "Error: number token '%s' contains too many '.'\n", token.lno, token.cno), token.content);
                 exit(1);
             } else return tt = TOK_FLOAT;
         } else return tt = TOK_INT;
