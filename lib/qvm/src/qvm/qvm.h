@@ -16,6 +16,8 @@ typedef enum {
     ERR_BAD_INST_PTR,
 } ERR;
 
+// TODO: zero flag
+// Might want to rename dup
 typedef enum {
     INST_NOP,
     INST_ENQUEUE,
@@ -32,14 +34,14 @@ typedef enum {
     INST_DIVU,
     INST_MULF,
     INST_DIVF,
-    INST_DUP, // Needs a better name like "BOOT" (booting copy of front to back of queue)
-    INST_SKIP, // Back of queue skips to front and drags front back
+    INST_DUP,
+    INST_SKIP,
     INST_CHEAT,
     INST_LDA,
     INST_STA,
     INST_EQ,
     INST_JUMP,
-    INST_JZ, // TODO: Zero flag
+    INST_JZ,
     INST_JNZ,
     INST_HALT,
     INST_COUNT,
