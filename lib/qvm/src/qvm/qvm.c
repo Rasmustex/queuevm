@@ -44,6 +44,10 @@ const char *inst_as_str(INST inst) {
     case INST_JUMP:           return "INST_JUMP";
     case INST_JZ:             return "INST_JZ";
     case INST_JNZ:            return "INST_JNZ";
+    case INST_PUTI:           return "INST_PUTI";
+    case INST_PUTU:           return "INST_PUTU";
+    case INST_PUTF:           return "INST_PUTF";
+    case INST_PUTPTR:         return "INST_PUTPTR";
     case INST_HALT:           return "INST_HALT";
     case INST_COUNT: default: return "Unreachable instruction";
     }
@@ -57,12 +61,10 @@ ERR qvm_inst_exec(Qvm *qvm) {
     case INST_NOP:
         break;
     case INST_ENQUEUE:
-        // TODO: change to allow enqueue from register
         if(enqueue(&qvm->queue, qvm->program[qvm->ip].arg) != 0)
             return ERR_QUEUE_REALLOC;
         break;
     case INST_DEQUEUE:
-        // TODO: change to dequeue into register, and add drop inst
         if(queue_empty(&qvm->queue))
             return ERR_QUEUE_UNDERFLOW;
         else if (qvm->program[qvm->ip].arg.u64 == 'a')
@@ -225,6 +227,26 @@ ERR qvm_inst_exec(Qvm *qvm) {
         else if(dequeue(&qvm->queue).u64 != 0)
             qvm->ip = qvm->program[qvm->ip].arg.u64 - 1; // minus one to account for increment at end of function
         break;
+    case INST_PUTI:
+        if(queue_empty(&qvm->queue))
+            return ERR_QUEUE_UNDERFLOW;
+        printf("%ld\n", dequeue(&qvm->queue).i64);
+        break;
+    case INST_PUTU:
+        if(queue_empty(&qvm->queue))
+            return ERR_QUEUE_UNDERFLOW;
+        printf("%lu\n", dequeue(&qvm->queue).u64);
+        break;
+    case INST_PUTF:
+        if(queue_empty(&qvm->queue))
+            return ERR_QUEUE_UNDERFLOW;
+        printf("%lf\n", dequeue(&qvm->queue).f64);
+        break;
+    case INST_PUTPTR:
+        if(queue_empty(&qvm->queue))
+            return ERR_QUEUE_UNDERFLOW;
+        printf("%p\n", dequeue(&qvm->queue).ptr64);
+        break;
     case INST_COUNT: case INST_HALT: default:
         return ERR_ILLEGAL_INST;
         break;
@@ -255,15 +277,11 @@ void qvm_run(Qvm *qvm, bool debug, int64_t limit) {
             }
         } else {
             while(qvm->program[qvm->ip].inst != INST_HALT && i < limit) {
-                printf("IP: %ld\n", qvm->ip);
-                printf("Inst: %s\n", inst_as_str(qvm->program[qvm->ip].inst));
                 if((err = qvm_inst_exec(qvm))!= ERR_OK) {
                     fprintf(stderr, "Runtime error: %s\n", err_as_str(err));
                     free(qvm->queue.data);
                     exit(1);
                 }
-                printf("A: u64: %lu i64: %ld f64: %f ptr: %p\n",  qvm->a.u64, qvm->a.i64, qvm->a.f64, qvm->a.ptr64);
-                print_queue(&qvm->queue); // will be removed once print instructions introduced
                 ++i;
             }
         }
@@ -283,15 +301,11 @@ void qvm_run(Qvm *qvm, bool debug, int64_t limit) {
             }
         } else {
             while(qvm->program[qvm->ip].inst != INST_HALT) {
-                printf("IP: %ld\n", qvm->ip);
-                printf("Inst: %s\n", inst_as_str(qvm->program[qvm->ip].inst));
                 if((err = qvm_inst_exec(qvm))!= ERR_OK) {
                     fprintf(stderr, "Runtime error: %s\n", err_as_str(err));
                     free(qvm->queue.data);
                     exit(1);
                 }
-                printf("A: u64: %lu i64: %ld f64: %f ptr: %p\n",  qvm->a.u64, qvm->a.i64, qvm->a.f64, qvm->a.ptr64);
-                print_queue(&qvm->queue); // will be removed once print instructions introduced
             }
         }
     }

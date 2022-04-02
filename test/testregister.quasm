@@ -5,6 +5,9 @@ loop:
     subi
     dup
     lda
+    sta
+    skip
+    puti
     enq 0
     skip
     eq 

@@ -43,6 +43,10 @@ typedef enum {
     INST_JUMP,
     INST_JZ,
     INST_JNZ,
+    INST_PUTI,  // the puts are temporary
+    INST_PUTU,
+    INST_PUTF,
+    INST_PUTPTR,
     INST_HALT,
     INST_COUNT,
 } INST;
@@ -52,13 +56,12 @@ typedef struct {
     Word arg;
 } Inst;
 
-// TODO: registers could be fun
 typedef struct {
     Queue queue;
     Inst program[PROGRAM_CAP];
     size_t program_size;
     uint64_t ip;
-    Word a, x; // registers - may want x to be like x register in NES
+    Word a, x; // registers - may want x to be like x register in 6502
 } Qvm;
 
 ERR qvm_inst_exec(Qvm *qvm);

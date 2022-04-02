@@ -131,11 +131,9 @@ int main(int argc, const char **argv) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_NOP};
                     inst_needs_arg = false;
                 }else if(!strcmp(token.content, "enq")) {
-                    // TODO: change to allow enqueue from register
                     quasm.program[quasm.program_size] = (Inst) {.inst = INST_ENQUEUE};
                     inst_needs_arg = true;
                 } else if(!strcmp(token.content, "deq")) {
-                    // TODO: change to dequeue into register, and add drop inst
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_DEQUEUE};
                     inst_needs_arg = false;
                 } else if(!strcmp(token.content, "addi")) {
@@ -204,6 +202,18 @@ int main(int argc, const char **argv) {
                 } else if(!strcmp(token.content, "jnz")) {
                     quasm.program[quasm.program_size] = (Inst) {.inst = INST_JNZ};
                     inst_needs_arg = true;
+                } else if(!strcmp(token.content, "puti")) {
+                    quasm.program[quasm.program_size++] = (Inst) {.inst = INST_PUTI};
+                    inst_needs_arg = false;
+                } else if(!strcmp(token.content, "putu")) {
+                    quasm.program[quasm.program_size++] = (Inst) {.inst = INST_PUTU};
+                    inst_needs_arg = false;
+                } else if(!strcmp(token.content, "putf")) {
+                    quasm.program[quasm.program_size++] = (Inst) {.inst = INST_PUTF};
+                    inst_needs_arg = false;
+                } else if(!strcmp(token.content, "putptr")) {
+                    quasm.program[quasm.program_size++] = (Inst) {.inst = INST_PUTPTR};
+                    inst_needs_arg = false;
                 } else if(!strcmp(token.content, "halt")) {
                     quasm.program[quasm.program_size++] = (Inst) {.inst = INST_HALT};
                     inst_needs_arg = false;
