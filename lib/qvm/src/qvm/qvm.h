@@ -61,11 +61,9 @@ typedef struct {
     Inst program[PROGRAM_CAP];
     size_t program_size;
     uint64_t ip;
-    Word a, x; // registers - may want x to be like x register in 6502
+    Word a; // registers - may want x to be like x register in 6502
 } Qvm;
 
-ERR qvm_inst_exec(Qvm *qvm);
-void qvm_run(Qvm *qvm, bool debug, int64_t limit);
 void qvm_load_program_from_file(Qvm *qvm, const char *fname);
 const char *inst_as_str(INST inst);
 // TODO: separate library
@@ -75,5 +73,6 @@ typedef struct {
 } Quasm;
 
 void quasm_dump_program_to_file(Quasm *quasm, const char *fname);
+const char *err_as_str(ERR err);
 
 #endif
